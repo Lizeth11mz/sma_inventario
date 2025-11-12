@@ -1,0 +1,6 @@
+<a href="{% url 'inventario:entradas' %}" class="{% if 'entradas' in request.path %}active{% endif %}">
+    <span class="icon">➕</span> Entradas
+</a>
+<a href="{% url 'inventario:salidas' %}" class="{% if 'salidas' in request.path %}active{% endif %}">
+    <span class="icon">➖</span> Salidas
+</a>

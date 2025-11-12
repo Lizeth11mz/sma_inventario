@@ -1,0 +1,183 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Registro de Entradas{% endblock %}
+
+{% block content %}
+    <h1 class="header-title">ENTRADAS</h1>
+
+    {# Este formulario maneja la ADICIÓN de un nuevo ítem a la lista temporal #}
+    <form action="{% url 'inventario:entradas' %}" method="post">
+        {% csrf_token %}
+        <fieldset class="form-section">
+            <legend style="color: var(--color-primary);">REGISTROS</legend>
+            
+            <div class="form-row">
+                <div class="form-group" style="flex-grow: 3;">
+                    <label>Descripción</label>
+                    <select name="descripcion" id="id_descripcion" onchange="cargarDatosProducto()" required>
+                        <option value="">--- Selecciona un Producto ---</option>
+                        
+                        {% for elemento in elementos %}
+                        <option 
+                            value="{{ elemento.id }}"
+                            data-clase="{{ elemento.clase.nombre }}"
+                            data-unidad="{{ elemento.unidad }}"
+                            {# Aquí el data-stock está bien, es solo para JS #}
+                            data-stock="{{ elemento.stock_actual|floatformat:2 }}"
+                        >
+                            {{ elemento.descripcion }}
+                        </option>
+                        {% endfor %}
+                        
+                    </select>
+                </div>
+                {# El botón 'Nuevo' no está dentro de un form-group, solo se alinea verticalmente #}
+                <button type="button" class="btn-primary" style="margin-top: 15px;" onclick="openNewProductModal()">Nuevo</button>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group" style="width: 15%;">
+                    <label>ID</label>
+                    {# CORRECCIÓN: Se mantiene el input con name="id_elemento" para enviarlo al POST de agregar_item #}
+                    <input type="text" name="id_elemento" id="producto_id" readonly value="">
+                </div>
+                <div class="form-group" style="width: 25%;">
+                    <label>Clase</label>
+                    <input type="text" name="clase" id="producto_clase" readonly value="">
+                </div>
+                <div class="form-group" style="width: 20%;">
+                    <label>Unidad</label>
+                    <input type="text" name="unidad" id="producto_unidad" readonly value="">
+                </div>
+                <div class="form-group" style="width: 25%;">
+                    <label>Cantidad (a ingresar)</label>
+                    <input type="number" name="cantidad" required min="1" step="any">
+                </div>
+            </div>
+
+            <div class="form-row">
+                {# Proveedor ocupa ahora el espacio completo #}
+                <div class="form-group" style="flex-grow: 3;">
+                    <label>Proveedor</label>
+                    <select name="proveedor_id" required>
+                        <option value="">--- Selecciona un Proveedor ---</option>
+                        {% for proveedor in proveedores %}
+                        <option value="{{ proveedor.id }}">{{ proveedor.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                {# El botón AGREGAR funciona porque tiene type="submit" y un name #}
+                <button type="submit" name="agregar_item" class="btn-primary" style="margin-top: 15px; width: 150px;">AGREGAR</button>
+            </div>
+        </fieldset>
+    </form>
+    
+    
+    {# La siguiente tabla va inmediatamente después del formulario de adición #}
+    <form action="{% url 'inventario:entradas' %}" method="post" id="lote_form">
+        {% csrf_token %}
+        
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Descripción</th>
+                    <th>ID</th>
+                    <th>Rubro</th>
+                    <th>Unidad</th>
+                    <th>Cantidad</th>
+                    <th>Proveedor</th>
+                    <th>RFC</th>
+                    <th>Folio</th>
+                    <th>Fecha</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# 🚀 Iteración sobre entradas_temporales #}
+                {% for item in entradas_temporales %}
+                <tr>
+                    <td>{{ item.descripcion }}</td>
+                    <td>{{ item.id_elemento }}</td>
+                    <td>{{ item.rubro }}</td>
+                    <td>{{ item.unidad }}</td>
+                    <td>{{ item.cantidad }}</td>
+                    <td>{{ item.nombre_proveedor }}</td>
+                    <td>{{ item.rfc }}</td>
+                    {# El Folio generado se muestra aquí #}
+                    <td>{{ item.folio }}</td>
+                    {# La Fecha generada se muestra aquí #}
+                    <td>{{ item.fecha }}</td>
+                    <td>
+                        {# 🚨 Formulario individual para la eliminación #}
+                        <form action="{% url 'inventario:entradas' %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="item_index" value="{{ forloop.counter0 }}">
+                            <button type="submit" name="eliminar_item" class="btn-primary" style="background-color: var(--color-danger); padding: 5px; margin: 0;">
+                                ELIMINAR
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    {# El colspan es 10 columnas: Descripcion, ID, Rubro, Unidad, Cantidad, Proveedor, RFC, Folio, Fecha, Eliminar #}
+                    <td colspan="10" style="text-align: center;">No hay registros de entradas temporales.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="text-align: right; margin-top: 20px;">
+            {# 🚨 Acción para confirmar y registrar el lote completo de entradas #}
+            <button type="submit" name="confirmar_entradas" class="btn-primary" style="width: 200px;">Confirmar Entradas</button>
+        </div>
+    </form>
+    
+    
+    {# Asumiendo que este modal existe #}
+    {% include 'inventario/modal_nuevo_producto.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Función JavaScript para rellenar los campos al seleccionar un producto
+    function cargarDatosProducto() {
+        const select = document.getElementById('id_descripcion');
+        const selectedOption = select.options[select.selectedIndex];
+        
+        // Obtener los IDs de los campos que existen en esta vista
+        const inputId = document.getElementById('producto_id');
+        const inputClase = document.getElementById('producto_clase');
+        const inputUnidad = document.getElementById('producto_unidad');
+        
+        // Obtiene el valor del ID y asegura que no sea undefined o null
+        const selectedValue = selectedOption ? selectedOption.value : '';
+        
+        // Verificar si se seleccionó una opción válida
+        if (selectedValue) {
+            // Rellenar los campos usando los atributos data-
+            inputId.value = selectedValue; // El ID del elemento
+            // Se añade || '' para asegurar que si el atributo no existe, el campo quede vacío y no con 'null'
+            inputClase.value = selectedOption.getAttribute('data-clase') || '';
+            inputUnidad.value = selectedOption.getAttribute('data-unidad') || '';
+        } else {
+            // Limpiar los campos si se selecciona la opción de "Selecciona un Producto"
+            inputId.value = '';
+            inputClase.value = '';
+            inputUnidad.value = '';
+        }
+    }
+
+    // Funciones del modal
+    function openNewProductModal() {
+        // Asegúrate de que el ID 'newProductModal' coincida con tu modal
+        document.getElementById('newProductModal').style.display = 'block';
+    }
+
+    function closeNewProductModal() {
+        document.getElementById('newProductModal').style.display = 'none';
+    }
+</script>
+{% endblock %}

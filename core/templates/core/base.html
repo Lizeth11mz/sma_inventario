@@ -1,0 +1,212 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Sistema Inventario{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"> 
+    <style>
+        /* Iconos simples, se recomienda usar FontAwesome o iconos SVG */
+        .icon { width: 20px; height: 20px; margin-right: 10px; }
+        
+        /* --- ESTILOS PARA LA BARRA SUPERIOR (HEADER) MANTENIDOS --- */
+        .top-header {
+            background-color: var(--color-background-darker, #2c3e50); 
+            color: white;
+            padding: 10px 20px; 
+            display: flex;
+            justify-content: flex-start; 
+            align-items: center;
+            height: 50px; 
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: fixed; 
+            top: 0;
+            left: var(--sidebar-width, 250px); 
+            right: 0;
+            z-index: 1000;
+        }
+
+        /* Contenedor de la información de usuario en el header */
+        .header-user-info {
+            display: flex;
+            gap: 10px; 
+            align-items: center;
+            margin-left: auto;
+            margin-right: auto;
+            padding-right: 0; 
+        }
+        
+        /* Estilos para la información de usuario en el header (Queda igual) */
+        .user-info-detail {
+            font-size: 0.9em;
+            color: white; 
+            margin-bottom: 0; 
+            white-space: nowrap; 
+        }
+        .user-info-detail strong {
+            color: var(--color-primary, #f39c12); 
+            font-weight: bold;
+        }
+
+        /* Ajuste para el área de contenido (queda igual) */
+        .content-area {
+            padding-top: 70px; 
+        }
+
+        /* Ocultar la información del usuario del sidebar (queda igual) */
+        .sidebar-user-info {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-layout">
+        
+        <nav class="sidebar">
+            
+            <div class="sidebar-logo-container">
+                <h3 class="system-title">SISTEMA INVENTARIO</h3> 
+                <div class="sidebar-logo">
+                </div>
+            </div>
+            
+            <div style="padding: 0 20px;">
+                <div class="sidebar-user-info" style="text-align: left; padding: 0 5px;">
+                </div>
+                <hr style="border-color: #34495e; margin: 15px 0;">
+            </div>
+            
+            <div class="sidebar-menu">
+                <a href="{% url 'inventario:dashboard' %}" class="{% if 'dashboard' in request.path %}active{% endif %}">
+                    <span class="icon">📦</span> Inventarios
+                </a>
+                
+                <a href="{% url 'inventario:entradas' %}" class="{% if 'entradas' in request.path %}active{% endif %}">
+                    <span class="icon">➕</span> Entradas
+                </a>
+                
+                <a href="{% url 'inventario:salidas' %}" class="{% if 'salidas' in request.path %}active{% endif %}">
+                    <span class="icon">➖</span> Salidas
+                </a>
+                
+                {% if user.is_staff %}
+                    <a href="{% url 'inventario:reportes' %}" class="{% if 'reportes' in request.path %}active{% endif %}">
+                        <span class="icon">📊</span> Reportes
+                    </a>
+                    
+                    <a href="{% url 'admin_sistema:usuarios' %}" class="{% if 'usuarios' in request.path %}active{% endif %}">
+                        <span class="icon">👤</span> Usuarios
+                    </a>
+                    
+                    <a href="{% url 'inventario:proveedores' %}" class="{% if 'proveedores' in request.path %}active{% endif %}">
+                        <span class="icon">🚚</span> Proveedores
+                    </a>
+                {% endif %}
+                
+                <hr style="border-color: #34495e; margin: 15px 0;">
+                
+                {# Solución de Logout: Usamos un formulario POST para evitar el ERROR 405 #}
+                <form action="{% url 'core:logout' %}" method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" style="
+                        background: none; 
+                        border: none; 
+                        padding: 10px 15px; 
+                        width: 100%; 
+                        text-align: left; 
+                        cursor: pointer; 
+                        color: var(--color-danger); 
+                        display: flex;
+                        align-items: center;
+                        font-family: inherit;
+                        font-size: 1em;
+                        transition: background-color 0.2s; 
+                    " 
+                    onmouseover="this.style.backgroundColor='#4a525a'"
+                    onmouseout="this.style.backgroundColor='transparent'">
+                        <span class="icon">🚪</span> Cerrar Sesión
+                    </button>
+                </form>
+                
+            </div>
+        </nav>
+        
+        <header class="top-header">
+            <div class="header-user-info">
+                
+                <p class="user-info-detail">
+                    👤 Usuario: <strong>{{ user.first_name|default:user.username }}</strong>
+                </p>
+
+                <p class="user-info-detail">
+                    🛡️ Permiso: 
+                    <strong>
+                        {% if request.user.perfilusuario.nivel_acceso == 1 %}Administrador
+                        {% elif request.user.perfilusuario.nivel_acceso == 2 %}Responsable
+                        {% elif request.user.perfilusuario.nivel_acceso == 3 %}Jefe Almacén
+                        {% elif request.user.perfilusuario.nivel_acceso == 4 %}Básico
+                        {% else %}No Asignado
+                        {% endif %}
+                    </strong>
+                </p>
+
+                <p class="user-info-detail">
+                    📅 Fecha: <strong id="current-date-display">N/A</strong>
+                </p>
+
+                <p class="user-info-detail">
+                    ⏱️ Hora: <strong id="current-time-display">00:00:00</strong>
+                </p>
+
+            </div>
+        </header>
+        
+        <div class="content-area">
+            {# Renderizar mensajes de Django #}
+            {% if messages %}
+                <div class="messages-container">
+                    <ul class="messages-list">
+                        {% for message in messages %}
+                            <li class="alert alert-{{ message.tags }}" role="alert">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+            
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+    
+    <script>
+        function updateClock() {
+            const now = new Date();
+            
+            // 1. Manejo de la Hora (HH:MM:SS)
+            const timeDisplay = document.getElementById('current-time-display');
+            if (timeDisplay) {
+                const hours = now.getHours().toString().padStart(2, '0');
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const seconds = now.getSeconds().toString().padStart(2, '0');
+                timeDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+            }
+
+            // 2. Manejo de la Fecha (DD/MM/YYYY)
+            const dateDisplay = document.getElementById('current-date-display');
+            if (dateDisplay) {
+                const day = now.getDate().toString().padStart(2, '0');
+                const month = (now.getMonth() + 1).toString().padStart(2, '0'); // getMonth() es 0-indexado
+                const year = now.getFullYear();
+                dateDisplay.textContent = `${day}/${month}/${year}`;
+            }
+        }
+
+        // Inicializa y actualiza cada segundo
+        updateClock();
+        setInterval(updateClock, 1000);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

@@ -1,0 +1,72 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login SISTEMA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Asegúrate de que esta ruta sea correcta para tu proyecto Django -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <script>
+        /**
+         * Función para limpiar los campos del formulario de login y redirigir a la página principal.
+         */
+        function handleCancel() {
+            // Obtener los campos por sus IDs
+            const usernameField = document.getElementById('id_username');
+            const passwordField = document.getElementById('id_password');
+            
+            // Limpiar los valores
+            if (usernameField) {
+                usernameField.value = '';
+            }
+            if (passwordField) {
+                passwordField.value = '';
+            }
+
+            // Redirigir a la página principal (la ruta raíz).
+            // Esto garantiza que no se acceda a una página protegida por error.
+            window.location.href = '/'; 
+
+            // Ya no es necesario 'return false' porque estamos usando un button type="button"
+        }
+    </script>
+</head>
+<body>
+    <div class="login-container">
+        
+        <div class="login-left">
+            <div class="login-logo" style="margin-top: 20px;">
+                <!-- Logo definido por CSS -->
+            </div>
+        </div>
+
+        <div class="login-right">
+            <div class="login-box">
+                <h2>ACCESO AL SISTEMA</h2>
+                <form method="post" class="login-form">
+                    {% csrf_token %}
+                    
+                    <label for="id_username">USUARIO:</label>
+                    <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" required id="id_username">
+                    
+                    <label for="id_password">CONTRASEÑA:</label>
+                    <input type="password" name="password" autocomplete="current-password" required id="id_password">
+                    
+                    {% comment %} Simulación de mensaje de error si existe {% endcomment %}
+                    {% if form.errors %}
+                        <p class="error-message">Usuario o contraseña incorrectos.</p>
+                    {% endif %}
+                    
+                    <button type="submit" class="btn-primary" style="margin-bottom: 10px;">ACCEDER</button>
+                    
+                    <!-- CAMBIO CLAVE: Se usa <button type="button"> para que NUNCA envíe el formulario -->
+                    <button type="button" onclick="handleCancel();" class="btn-cancelar">CANCELAR</button>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

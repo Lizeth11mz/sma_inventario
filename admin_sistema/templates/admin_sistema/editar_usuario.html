@@ -1,0 +1,93 @@
+﻿{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Editar Usuario{% endblock %}
+
+{% block content %}
+    <h1 class="header-title">✏️ EDITAR USUARIO: {{ usuario.username }}</h1>
+
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="{{ message.tags }}" style="list-style: none; padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: {% if 'success' in message.tags %}#d4edda{% elif 'error' in message.tags %}#f8d7da{% else %}#fff3cd{% endif %}; color: {% if 'error' in message.tags %}#721c24{% else %}#155724{% endif %}; border: 1px solid {% if 'error' in message.tags %}#f5c6cb{% else %}#c3e6cb{% endif %};">
+            {{ message }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form action="{% url 'admin_sistema:editar_usuario' usuario.pk %}" method="post">
+        {% csrf_token %}
+        <fieldset class="form-section">
+            <legend style="color: var(--color-primary);">DATOS DEL USUARIO</legend>
+            <div class="form-row" style="align-items: flex-end;">
+                
+                <div class="form-group" style="width: 20%;">
+                    <label>Usuario (No editable)</label>
+                    <input type="text" name="usuario" value="{{ usuario.username }}" required readonly style="background-color: #eee;">
+                </div>
+
+                <div class="form-group" style="width: 25%;">
+                    <label># de Empleado</label>
+                    {# ✅ USO DE num_empleado_actual enviado desde la vista #}
+                    <input type="text" name="num_empleado" value="{{ num_empleado_actual|default:'' }}">
+                </div>
+
+                <div class="form-group" style="width: 25%;">
+                    <label>Nombre</label>
+                    <input type="text" name="nombre" value="{{ usuario.first_name }}" required>
+                </div>
+
+                <div class="form-group" style="width: 25%;">
+                    <label>Nivel</label>
+                    <select name="nivel">
+                        {# ✅ Se mantiene la lógica de selección basada en el nivel_acceso del PerfilUsuario #}
+                        <option value="1" {% if usuario.perfilusuario.nivel_acceso == 1 %}selected{% endif %}>1 (Administrador)</option>
+                        <option value="2" {% if usuario.perfilusuario.nivel_acceso == 2 %}selected{% endif %}>2 (Responsable)</option>
+                        <option value="3" {% if usuario.perfilusuario.nivel_acceso == 3 %}selected{% endif %}>3 (Jefe Almacén)</option>
+                        <option value="4" {% if usuario.perfilusuario.nivel_acceso == 4 %}selected{% endif %}>4 (Básico)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="width: 20%;">
+                    <label>Estado</label>
+                    <select name="estado">
+                        <option value="Activo" {% if usuario.is_active %}selected{% endif %}>Activo</option>
+                        <option value="Inactivo" {% if not usuario.is_active %}selected{% endif %}>Inactivo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row" style="align-items: flex-end;">
+                <div class="form-group" style="width: 33%;">
+                    <label>Apellidos</label>
+                    <input type="text" name="apellidos" value="{{ usuario.last_name }}">
+                </div>
+
+                <div class="form-group" style="width: 33%;">
+                    <label>Email</label>
+                    <input type="email" name="email" value="{{ usuario.email|default:'' }}">
+                </div>
+                <div class="form-group" style="width: 33%; visibility: hidden;">
+                    </div>
+            </div>
+
+            <div class="form-row" style="align-items: flex-end;">
+                <div class="form-group" style="width: 45%;">
+                    <label>Nueva Contraseña (Dejar vacío para no cambiar)</label>
+                    <input type="password" name="contrasena">
+                </div>
+                <div class="form-group" style="width: 45%;">
+                    <label>Confirmar Nueva Contraseña</label>
+                    <input type="password" name="confirmar_contrasena">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100px;">Guardar</button>
+            </div>
+        </fieldset>
+    </form>
+    
+    <div style="margin-top: 20px;">
+        <a href="{% url 'admin_sistema:usuarios' %}" class="btn-secondary" style="padding: 10px;">⬅️ Volver al Listado</a>
+    </div>
+
+{% endblock %}

@@ -1,0 +1,104 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Sistema Inventario | Editar Proveedor{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h1 class="header-title" style="text-align: center; margin-bottom: 20px;">
+        ✍️ EDITAR PROVEEDOR: {{ proveedor.nombre }}
+    </h1>
+
+    {# --- Mostrar Mensajes de Django (success, error, info) --- #}
+    {% if messages %}
+    <ul class="messages" style="list-style: none; padding: 0;">
+        {% for message in messages %}
+        <li class="{{ message.tags }}" style="list-style: none; padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: 
+            {% if 'success' in message.tags %}#d4edda{% elif 'error' in message.tags %}#f8d7da{% else %}#fff3cd{% endif %}; 
+            color: {% if 'error' in message.tags %}#721c24{% else %}#155724{% endif %}; 
+            border: 1px solid {% if 'error' in message.tags %}#f5c6cb{% else %}#c3e6cb{% endif %};">
+            {{ message }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {# El formulario apunta a la misma URL de edición, enviando el ID del proveedor #}
+    <form action="{% url 'inventario:proveedor_editar' proveedor.id %}" method="post">
+        {% csrf_token %}
+        <fieldset class="form-section" style="max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #ccc; border-radius: 8px;">
+            <legend class="section-title-legend" style="color: var(--color-primary);">DATOS DEL PROVEEDOR</legend>
+            
+            <div class="form-row" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                
+                {# Nombre del Proveedor #}
+                <div class="form-group" style="flex: 1 1 48%;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;" for="nombre">Nombre del Proveedor *</label>
+                    <input type="text" id="nombre" name="nombre" value="{{ proveedor.nombre }}" required 
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                {# RFC #}
+                <div class="form-group" style="flex: 1 1 48%;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;" for="rfc">RFC</label>
+                    <input type="text" id="rfc" name="rfc" value="{{ proveedor.rfc|default_if_none:'' }}"
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+
+            <div class="form-row" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                
+                {# Dirección #}
+                <div class="form-group" style="flex: 1 1 60%;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;" for="direccion">Dirección</label>
+                    <input type="text" id="direccion" name="direccion" value="{{ proveedor.direccion|default_if_none:'' }}"
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                {# Giro #}
+                <div class="form-group" style="flex: 1 1 35%;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;" for="giro">Giro</label>
+                    <input type="text" id="giro" name="giro" value="{{ proveedor.giro|default_if_none:'' }}"
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+            </div>
+            
+            <div class="form-row" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+                
+                {# Contacto / Teléfono #}
+                <div class="form-group" style="flex: 1 1 48%;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;" for="contacto">Contacto / Teléfono</label>
+                    <input type="text" id="contacto" name="contacto" value="{{ proveedor.contacto|default_if_none:'' }}"
+                           style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+
+                {# Estado (Activo/Inactivo) #}
+                <div class="form-group" style="flex: 1 1 48%;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;" for="activo">Estado</label>
+                    <select id="activo" name="activo" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                        <option value="True" {% if proveedor.activo %}selected{% endif %}>Activo</option>
+                        <option value="False" {% if not proveedor.activo %}selected{% endif %}>Inactivo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-actions" style="text-align: right; margin-top: 20px;">
+                <a href="{% url 'inventario:proveedores' %}" class="btn-secondary" 
+                   style="padding: 10px 15px; margin-right: 10px; border-radius: 4px; text-decoration: none; color: #333; background-color: #f4f4f4; border: 1px solid #ccc;">
+                    Cancelar
+                </a>
+                <button type="submit" class="btn-primary" 
+                        style="padding: 10px 15px; border-radius: 4px; border: none; color: white; background-color: #007bff; cursor: pointer;">
+                    Guardar Cambios
+                </button>
+            </div>
+        </fieldset>
+    </form>
+    
+    <div style="margin-top: 20px; max-width: 800px; margin-left: auto; margin-right: auto;">
+        <a href="{% url 'inventario:proveedores' %}" class="btn-secondary" style="padding: 10px; text-decoration: none; background-color: #f4f4f4; color: #333; border: 1px solid #ccc; border-radius: 4px;">
+            ⬅️ Volver al Listado
+        </a>
+    </div>
+</div>
+{% endblock %}

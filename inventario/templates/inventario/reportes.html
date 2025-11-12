@@ -1,0 +1,61 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Generación de Reportes{% endblock %}
+
+{% block content %}
+    <h1 class="header-title">REPORTES</h1>
+
+    <fieldset class="form-section">
+        <legend style="color: var(--color-primary);">FILTROS DE REPORTE</legend>
+        <div class="form-row">
+            <div class="form-group" style="width: 20%;">
+                <label>Tipo de Reporte</label>
+                <select>
+                    <option>Inventario General</option>
+                    <option>Movimientos (Entradas/Salidas)</option>
+                    <option>Entradas por Proveedor</option>
+                    <option>Salidas por Destino</option>
+                </select>
+            </div>
+            <div class="form-group" style="width: 20%;">
+                <label>Fecha Inicio</label>
+                <input type="date">
+            </div>
+            <div class="form-group" style="width: 20%;">
+                <label>Fecha Fin</label>
+                <input type="date">
+            </div>
+            <div class="form-group" style="width: 20%;">
+                <label>Formato</label>
+                <select>
+                    <option>PDF</option>
+                    <option>Excel (XLSX)</option>
+                </select>
+            </div>
+            <button class="btn-primary" style="width: 150px; margin-top: 15px;">Generar Reporte</button>
+        </div>
+    </fieldset>
+
+    <div class="form-section" style="margin-top: 20px;">
+        <h2>Reportes Generados Recientes</h2>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nombre de Archivo</th>
+                    <th>Tipo</th>
+                    <th>Fecha Generación</th>
+                    <th>Descargar</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Inventario_General_2024-10.xlsx</td>
+                    <td>Excel</td>
+                    <td>2025-10-29 10:00</td>
+                    <td><button class="btn-primary" style="padding: 5px;">Descargar</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

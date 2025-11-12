@@ -1,0 +1,182 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+
+{% block title %}Registro de Salidas{% endblock %}
+
+{% block content %}
+
+    <h1 class="header-title" style="background-color: var(--color-primary); color: var(--color-secondary);">SALIDAS</h1>
+
+    {# Formulario 1: Maneja la adición de un nuevo ítem a la lista temporal (Carrito) #}
+    <form action="{% url 'inventario:salidas' %}" method="post">
+        {% csrf_token %}
+        <fieldset class="form-section">
+            <legend style="color: var(--color-primary);">REGISTROS DE SALIDA</legend>
+            
+            <div class="form-row">
+                <div class="form-group" style="flex-grow: 3;">
+                    <label>Descripción</label>
+                    <select name="descripcion" id="id_descripcion" onchange="cargarDatosProducto()" required>
+                        <option value="">--- Selecciona un Producto ---</option>
+                        
+                        {% for elemento in elementos %}
+                        <option
+                            value="{{ elemento.id }}"
+                            data-clase="{{ elemento.clase.nombre }}"
+                            data-unidad="{{ elemento.unidad }}"
+                            {# 🚀 El stock se carga aquí correctamente #}
+                            data-stock="{{ elemento.stock_actual|floatformat:2 }}"
+                        >
+                            {{ elemento.descripcion }}
+                        </option>
+                        {% endfor %}
+                        
+                    </select>
+                </div>
+                <button type="button" class="btn-primary" style="margin-top: 15px;" onclick="openNewProductModal()">Nuevo</button>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group" style="width: 15%;">
+                    <label>ID</label>
+                    <input type="text" name="id" id="producto_id" readonly value="">
+                </div>
+                <div class="form-group" style="width: 20%;">
+                    <label>Clase</label>
+                    <input type="text" name="clase" id="producto_clase" readonly value="">
+                </div>
+                <div class="form-group" style="width: 15%;">
+                    <label>Unidad</label>
+                    <input type="text" name="unidad" id="producto_unidad" readonly value="">
+                </div>
+                <div class="form-group" style="width: 25%;">
+                    <label>Stock Actual</label>
+                    {# 🚀 Este campo se rellena automáticamente con el stock_actual del producto #}
+                    <input type="text" name="stock" id="producto_stock" readonly value="">
+                </div>
+                <div class="form-group" style="width: 25%;">
+                    <label>Cantidad (a retirar)</label>
+                    {# ✅ CORRECCIÓN: Usamos type="text" con pattern para permitir decimales (puntos y comas) y la validación min="0.001" o min="1" si son unidades enteras #}
+                    <input type="text" 
+                        name="cantidad" 
+                        required 
+                        min="0.001" 
+                        pattern="[0-9]+([.,][0-9]+)?" 
+                        title="Solo números y opcionalmente un punto o coma decimal."
+                        placeholder="Ej: 10 o 5.5"
+                    >
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group" style="flex-grow: 3;">
+                    <label>Destino/Referencia</label>
+                    <select name="destino_referencia" required>
+                        <option value="">--- Selecciona un Destino ---</option>
+                        <option value="Almacén Zona A">Almacén Zona A</option>
+                        <option value="Almacén Zona B">Almacén Zona B</option>
+                        <option value="Almacén Zona C">Almacén Zona C</option>
+                        <option value="Almacén Zona D">Almacén Zona D</option>
+                        <option value="Almacén Zona E">Almacén Zona E</option>
+                    </select>
+                </div>
+                
+                <button type="submit" name="agregar_item" class="btn-primary" style="margin-top: 15px; width: 150px;">AGREGAR</button>
+            </div>
+        </fieldset>
+    </form>
+    
+    {# Formulario 2: Maneja la tabla temporal y la confirmación final #}
+    <form action="{% url 'inventario:salidas' %}" method="post" id="lote_salidas_form">
+        {% csrf_token %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Descripción</th>
+                    <th>ID</th>
+                    <th>Rubro</th>
+                    <th>Unidad</th>
+                    <th>Cantidad</th>
+                    <th>Destino</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# 🚀 Iteración sobre salidas_temporales #}
+                {% for item in salidas_temporales %}
+                <tr>
+                    <td>{{ item.descripcion }}</td>
+                    <td>{{ item.id_elemento }}</td>
+                    <td>{{ item.rubro }}</td>
+                    <td>{{ item.unidad }}</td>
+                    <td>{{ item.cantidad }}</td>
+                    <td>{{ item.destino_referencia }}</td>
+                    <td>
+                        <form action="{% url 'inventario:salidas' %}" method="post" style="display: inline;">
+                            {% csrf_token %}
+                            <input type="hidden" name="item_index" value="{{ forloop.counter0 }}">
+                            <button type="submit" name="eliminar_item" class="btn-primary" style="padding: 5px 10px; margin: 0; font-size: 0.85em; width: auto;">
+                                ELIMINAR
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" style="text-align: center;">No hay registros de salidas temporales.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div style="text-align: right; margin-top: 20px;">
+            <button type="submit" name="confirmar_salidas" class="btn-primary" style="width: 200px;">Confirmar Salidas</button>
+        </div>
+    </form>
+
+    {% include 'inventario/modal_nuevo_producto.html' %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Función JavaScript para rellenar los campos al seleccionar un producto
+    function cargarDatosProducto() {
+        const select = document.getElementById('id_descripcion');
+        const selectedOption = select.options[select.selectedIndex];
+        
+        // Obtener los IDs de los campos
+        const inputId = document.getElementById('producto_id');
+        const inputClase = document.getElementById('producto_clase');
+        const inputUnidad = document.getElementById('producto_unidad');
+        const inputStock = document.getElementById('producto_stock'); 
+
+        const selectedValue = selectedOption ? selectedOption.value : '';
+        
+        // Verificar si se seleccionó una opción válida
+        if (selectedValue) {
+            // Rellenar los campos usando los atributos data-
+            inputId.value = selectedValue; // El ID del elemento
+            inputClase.value = selectedOption.getAttribute('data-clase') || '';
+            inputUnidad.value = selectedOption.getAttribute('data-unidad') || '';
+            // 🚀 Rellenar Stock Actual con el valor correcto
+            inputStock.value = selectedOption.getAttribute('data-stock') || '';
+        } else {
+            // Limpiar los campos si se selecciona la opción inicial
+            inputId.value = '';
+            inputClase.value = '';
+            inputUnidad.value = '';
+            inputStock.value = '';
+        }
+    }
+
+    // Funciones para el modal (deben estar disponibles)
+    function openNewProductModal() {
+        document.getElementById('newProductModal').style.display = 'block';
+    }
+
+    function closeNewProductModal() {
+        document.getElementById('newProductModal').style.display = 'none';
+    }
+</script>
+{% endblock %}

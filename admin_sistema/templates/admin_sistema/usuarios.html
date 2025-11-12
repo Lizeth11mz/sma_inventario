@@ -1,0 +1,148 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+    <h1 class="header-title">USUARIOS</h1>
+    
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        {# Aseguramos un estilo consistente para los mensajes #}
+        <li class="{{ message.tags }}" style="list-style: none; padding: 10px; border-radius: 5px; margin-bottom: 10px; background-color: {% if 'success' in message.tags %}#d4edda{% elif 'error' in message.tags %}#f8d7da{% else %}#fff3cd{% endif %}; color: {% if 'error' in message.tags %}#721c24{% else %}#155724{% endif %}; border: 1px solid {% if 'error' in message.tags %}#f5c6cb{% else %}#c3e6cb{% endif %};">
+            {{ message }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {# --- Formulario de Creación de Usuarios --- #}
+    <form action="{% url 'admin_sistema:usuarios' %}" method="post">
+        {% csrf_token %}
+        <fieldset class="form-section">
+            <legend style="color: var(--color-primary);">USUARIOS</legend>
+            <div class="form-row" style="align-items: flex-end;">
+                <div class="form-group" style="width: 20%;">
+                    <label>Usuario</label>
+                    <input type="text" name="usuario" required>
+                </div>
+                <div class="form-group" style="width: 25%;">
+                    <label># de Empleado</label>
+                    {# ✅ CORRECCIÓN: Aseguramos el nombre del campo para el número de empleado #}
+                    <input type="text" name="num_empleado"> 
+                </div>
+                <div class="form-group" style="width: 25%;">
+                    <label>Nombre</label>
+                    <input type="text" name="nombre" required>
+                </div>
+                <div class="form-group" style="width: 25%;">
+                    <label>Nivel</label>
+                    {# ✅ CORRECCIÓN: Se mantiene el nombre del campo para el nivel de acceso #}
+                    <select name="nivel">
+                        <option value="1">1 (Administrador)</option>
+                        <option value="2">2 (Responsable)</option>
+                        <option value="3">3 (Jefe Almacén)</option>
+                        <option value="4">4 (Básico)</option>
+                    </select>
+                </div>
+                <div class="form-group" style="width: 20%;">
+                    <label>Estado</label>
+                    <select name="estado"> 
+                        <option value="Activo">Activo</option>
+                        <option value="Inactivo">Inactivo</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row" style="align-items: flex-end;">
+                <div class="form-group" style="width: 33%;">
+                    <label>Apellidos</label>
+                    <input type="text" name="apellidos">
+                </div>
+                
+                <div class="form-group" style="width: 33%;">
+                    <label>Email</label>
+                    <input type="email" name="email"> 
+                </div>
+                {# Se remueve el div 'hidden' si no es necesario para el layout #}
+            </div>
+
+            <div class="form-row" style="align-items: flex-end;">
+                <div class="form-group" style="width: 45%;">
+                    <label>Escribir Contraseña</label>
+                    <input type="password" name="contrasena" required>
+                </div>
+                <div class="form-group" style="width: 45%;">
+                    <label>Confirmar Contraseña</label>
+                    <input type="password" name="confirmar_contrasena" required>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100px;">Agregar</button>
+            </div>
+        </fieldset>
+    </form>
+    
+    {# --- Tabla de Usuarios --- #}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th>Apellidos</th>
+                <th>**Email**</th> 
+                <th>**Numero Empleado**</th> {# ✅ Corrección: Encabezado para la columna #}
+                <th>**Nivel**</th>           {# ✅ Corrección: Encabezado para la columna #}
+                <th>Estado</th>
+                <th>Modificar</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for usuario in usuarios %}
+            <tr>
+                <td>{{ usuario.username }}</td>
+                <td>{{ usuario.first_name|default:"" }}</td> {# Mostrar vacío en lugar de N/A si está vacío #}
+                <td>{{ usuario.last_name|default:"" }}</td>  {# Mostrar vacío en lugar de N/A si está vacío #}
+                
+                <td>{{ usuario.email|default:"N/A" }}</td>
+                
+                {# Usando PerfilUsuario para Numero Empleado #}
+                {# Se asume que la vista usa select_related('perfilusuario') #}
+                <td>{{ usuario.perfilusuario.numero_empleado|default:"N/A" }}</td> 
+                
+                <td>
+                    {# Usando PerfilUsuario para el nivel de acceso #}
+                    {% with nivel=usuario.perfilusuario.nivel_acceso %}
+                        {% if nivel == 1 %}1 (Admin)
+                        {% elif nivel == 2 %}2 (Responsable)
+                        {% elif nivel == 3 %}3 (Jefe Almacén)
+                        {% elif nivel == 4 %}4 (Básico)
+                        {% else %}N/A
+                        {% endif %}
+                    {% endwith %}
+                </td>
+                
+                <td>{% if usuario.is_active %}Activo{% else %}Inactivo{% endif %}</td>
+                
+                <td>
+                    {# Botón Modificar #}
+                    <a href="{% url 'admin_sistema:editar_usuario' usuario.pk %}" class="btn-primary" style="padding: 5px;">Modificar</a>
+                </td>
+                <td>
+                    {# Botón Eliminar: Bloqueado para el Superusuario y para el usuario actualmente logueado #}
+                    {% if usuario.is_superuser or request.user.pk == usuario.pk %}
+                        <button disabled class="btn-primary" style="background-color: #888; padding: 5px; cursor: not-allowed;">Eliminar</button>
+                    {% else %}
+                        <a href="{% url 'admin_sistema:eliminar_usuario' usuario.pk %}" class="btn-primary" style="background-color: var(--color-danger); padding: 5px;">Eliminar</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                {# Colspan 9 (Usuario, Nombre, Apellidos, Email, NumEmpleado, Nivel, Estado, Modificar, Eliminar) #}
+                <td colspan="9">No hay usuarios registrados en el sistema.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

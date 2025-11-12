@@ -1,0 +1,158 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Proveedores{% endblock %}
+
+{% block content %}
+
+<div class="main-content">
+
+    {# ----------------------------------------------------------- #}
+    {# 💡 Título principal de la sección (PROVEEDORES) - ALINEADO A LA IZQUIERDA #}
+    {# ----------------------------------------------------------- #}
+    <div style="margin-bottom: 20px;">
+        {# Título PROVEEDORES #}
+        <h1 class="header-title" style="padding: 10px 40px; display: inline-block; margin-bottom: 20px;">PROVEEDORES</h1>
+    </div>
+    
+    {# --- Mostrar Mensajes de Django (utilizando las clases CSS .messages-container, .alert-success, etc.) --- #}
+    {% if messages %}
+    <div class="messages-container">
+        <ul class="messages-list">
+            {% for message in messages %}
+            <li class="alert alert-{{ message.tags }}" style="list-style: none;">
+                {{ message }}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {# Contenedor principal de la sección de formulario #}
+    <fieldset class="form-section">
+        {# Legend que sirve como título del formulario de registro #}
+        <legend>REGISTRO DE PROVEEDORES</legend> 
+        
+        {# --- FORMULARIO DE REGISTRO --- #}
+        <form action="{% url 'inventario:proveedores' %}" method="post">
+            {% csrf_token %}
+
+            <div class="form-row" style="flex-wrap: wrap; align-items: flex-start;">
+                
+                {# Contenedor principal de campos de texto #}
+                <div style="flex: 1 1 600px; display: flex; flex-direction: column;">
+
+                    {# Nombre del proveedor y Botón Agregar (en la misma fila) #}
+                    <div class="form-group" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                        <label for="id_nombre" style="font-style: normal; width: 150px; flex-shrink: 0;">Nombre del proveedor *</label>
+                        <input type="text" name="nombre" id="id_nombre" required style="flex-grow: 1;">
+                        {# Botón Agregar: Usa la clase btn-primary del CSS #}
+                        <button type="submit" class="btn-primary" style="width: 100px; padding: 10px;">Agregar</button>
+                    </div>
+                    
+                    {# RFC y Giro (en fila) #}
+                    <div style="display: flex; gap: 20px;">
+                        <div class="form-group" style="width: 50%;">
+                            <label for="id_rfc">RFC</label>
+                            <input type="text" name="rfc" id="id_rfc">
+                        </div>
+                        <div class="form-group" style="width: 50%;">
+                            <label for="id_giro">GIRO</label>
+                            <input type="text" name="giro" id="id_giro">
+                        </div>
+                    </div>
+
+                    {# Dirección #}
+                    <div class="form-group">
+                        <label for="id_direccion">Dirección</label>
+                        <input type="text" name="direccion" id="id_direccion">
+                    </div>
+                    
+                    {# Contacto #}
+                    <div class="form-group">
+                        <label for="id_contacto">Contacto / Teléfono</label>
+                        <input type="text" name="contacto" id="id_contacto">
+                    </div>
+                </div>
+
+                {# Contenedor para Estado (Alineado a la derecha/abajo) #}
+                <div style="flex: 1 1 200px; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; margin-top: 10px;">
+                    <div class="form-group" style="width: 100%;">
+                        <label for="id_activo" style="font-style: normal; font-weight: bold; margin-bottom: 5px;">Estado</label>
+                        <select name="activo" id="id_activo" required style="width: 150px;">
+                            <option value="True" selected>Activo</option>
+                            <option value="False">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </fieldset>
+    
+    
+    {# LA LÍNEA DE SEPARACIÓN '---' HA SIDO ELIMINADA DE AQUÍ #}
+
+    {# ----------------------------------------------------------- #}
+    {# TABLA DE DATOS #}
+    {# ----------------------------------------------------------- #}
+    <div style="overflow-x: auto;">
+        <table class="data-table" style="min-width: 800px;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>RFC</th>
+                    <th>Dirección</th>
+                    <th>Giro</th>
+                    <th>Contacto</th>
+                    <th>Estado</th>
+                    <th>Editar</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proveedor in proveedores %}
+                <tr>
+                    <td>{{ proveedor.id }}</td>
+                    <td>{{ proveedor.nombre }}</td>
+                    <td>{{ proveedor.rfc|default:"" }}</td>
+                    <td>{{ proveedor.direccion|default:"" }}</td>
+                    <td>{{ proveedor.giro|default:"" }}</td>
+                    <td>{{ proveedor.contacto|default:"" }}</td>
+                    <td>
+                        {# Uso de clases CSS para estado Activo/Inactivo #}
+                        <span class="{% if proveedor.activo %}status-active{% else %}status-inactive{% endif %}" 
+                              style="display: inline-block;">
+                            {% if proveedor.activo %}Activo{% else %}Inactivo{% endif %}
+                        </span>
+                    </td>
+                    
+                    {# Botones de acción #}
+                    <td>
+                        <a href="{% url 'inventario:proveedor_editar' proveedor.id %}" class="btn-edit" style="padding: 5px 10px;">Modificar</a>
+                    </td>
+                    
+                    <td>
+                        {# Uso de formulario POST para eliminar con confirmación JS #}
+                        <form action="{% url 'inventario:proveedor_eliminar' proveedor.id %}" method="post" 
+                              onsubmit="return confirm('¿Estás seguro de que deseas eliminar a {{ proveedor.nombre }}?');" 
+                              style="display: inline;">
+                            {% csrf_token %}
+                            {# Uso de la clase CSS btn-danger #}
+                            <button type="submit" class="btn-danger" style="padding: 5px 10px;">
+                                Eliminar
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="text-align: center;">No hay proveedores registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
