@@ -60,6 +60,9 @@
     </style>
 </head>
 <body>
+    {# INICIO DE LA CORRECCIÓN DE SEGURIDAD: Define user_profile para evitar RelatedObjectDoesNotExist #}
+    {% with user_profile=request.user.perfilusuario %}
+    
     <div class="main-layout">
         
         <nav class="sidebar">
@@ -89,7 +92,8 @@
                     <span class="icon">➖</span> Salidas
                 </a>
                 
-                {% if user.is_staff %}
+                {# LÓGICA DE PERMISOS: Solo si existe el perfil Y el nivel es 1 (Administrador) #}
+                {% if user_profile and user_profile.nivel_acceso == 1 %}
                     <a href="{% url 'inventario:reportes' %}" class="{% if 'reportes' in request.path %}active{% endif %}">
                         <span class="icon">📊</span> Reportes
                     </a>
@@ -141,11 +145,16 @@
                 <p class="user-info-detail">
                     🛡️ Permiso: 
                     <strong>
-                        {% if request.user.perfilusuario.nivel_acceso == 1 %}Administrador
-                        {% elif request.user.perfilusuario.nivel_acceso == 2 %}Responsable
-                        {% elif request.user.perfilusuario.nivel_acceso == 3 %}Jefe Almacén
-                        {% elif request.user.perfilusuario.nivel_acceso == 4 %}Básico
-                        {% else %}No Asignado
+                        {# CORRECCIÓN DE SEGURIDAD: Usar user_profile para mostrar el nivel #}
+                        {% if user_profile %}
+                            {% if user_profile.nivel_acceso == 1 %}Administrador
+                            {% elif user_profile.nivel_acceso == 2 %}Responsable
+                            {% elif user_profile.nivel_acceso == 3 %}Jefe Almacén
+                            {% elif user_profile.nivel_acceso == 4 %}Básico
+                            {% else %}No Asignado
+                            {% endif %}
+                        {% else %}
+                            Invitado
                         {% endif %}
                     </strong>
                 </p>
@@ -178,6 +187,8 @@
         </div>
     </div>
     
+    {% endwith %} {# FIN DE LA CORRECCIÓN DE SEGURIDAD #}
+
     <script>
         function updateClock() {
             const now = new Date();
