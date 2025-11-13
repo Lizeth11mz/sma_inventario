@@ -1,21 +1,45 @@
 # C:\Users\ADMIN\Desktop\proyecto\sma_inventario admin_sistema\views.py
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db import IntegrityError
 from core.models import PerfilUsuario 
 from django.db.models import F 
+
 # 🚨 CORRECCIÓN DEL IMPORTERROR: Importar RelatedObjectDoesNotExist desde el descriptor del campo.
-RelatedObjectDoesNotExist = User.perfilusuario.RelatedObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist 
+RelatedObjectDoesNotExist = ObjectDoesNotExist # Aunque técnicamente es ObjectDoesNotExist, lo redefinimos por consistencia.
+
+
+# ********************************************************************
+# LÓGICA DE PERMISOS (NIVELES DE ACCESO)
+# ********************************************************************
+
+# Función de prueba para verificar si el usuario es Administrador (Nivel 1)
+def is_admin(user):
+    """Retorna True si el usuario está autenticado y tiene Nivel 1 (Administrador)."""
+    if not user.is_authenticated:
+        return False
+    try:
+        # Se verifica que el perfil exista y que el nivel sea 1
+        return user.perfilusuario.nivel_acceso == 1
+    except RelatedObjectDoesNotExist:
+        # Si no tiene perfil, se niega el acceso por seguridad
+        return False
+    except AttributeError:
+        # Si el modelo User no tiene el atributo perfilusuario (poco probable si usas select_related)
+        return False
 
 
 # ********************************************************************
 # VISTAS DE GESTIÓN DE USUARIOS
 # ********************************************************************
 
+# Aplicamos la restricción: solo Administrador (Nivel 1) puede acceder
 @login_required
+@user_passes_test(is_admin, login_url='/dashboard/') # Redirige al dashboard si el acceso es denegado
 def gestion_usuarios(request):
     """Maneja la creación de usuarios (POST) y lista todos (GET)."""
     
@@ -32,7 +56,7 @@ def gestion_usuarios(request):
         confirm_password = request.POST.get('confirmar_contrasena')
         
         # Nuevos campos para PerfilUsuario
-        nivel = request.POST.get('nivel') # Nivel: 1=Superuser, 2=Staff, 3=Jefe Almacén, 4=Básico
+        nivel = request.POST.get('nivel') # Nivel: 1=Admin, 2=Responsable, 3=Jefe Almacén
         num_empleado = request.POST.get('num_empleado')
         
         # --- VALIDACIONES ---
@@ -44,9 +68,10 @@ def gestion_usuarios(request):
         try:
             # Configuración de permisos de User basada en Nivel
             is_superuser = nivel == '1'
-            is_staff = nivel in ('1', '2')
+            # Permitimos que Responsable (2) y Admin (1) sean staff, si lo deseas
+            is_staff = nivel in ('1', '2') 
             
-            # Crear el objeto User (dispara la señal que crea PerfilUsuario)
+            # Crear el objeto User 
             user = User.objects.create_user(
                 username=username,
                 password=password,
@@ -58,6 +83,7 @@ def gestion_usuarios(request):
             )
             
             # GUARDAR INFORMACIÓN EN EL PERFIL DE USUARIO
+            # El perfil debió crearse automáticamente con una señal, pero lo ajustamos
             user.perfilusuario.nivel_acceso = int(nivel) 
             user.perfilusuario.numero_empleado = num_empleado if num_empleado else None 
             user.perfilusuario.save()
@@ -65,7 +91,7 @@ def gestion_usuarios(request):
             messages.success(request, f'¡Usuario "{username}" creado exitosamente!')
             
         except IntegrityError:
-            messages.error(request, f'El nombre de usuario "{username}" ya está registrado o el Email ya existe (si tiene restricción de unicidad).')
+            messages.error(request, f'El nombre de usuario "{username}" ya está registrado o el Email ya existe.')
         except Exception as e:
             messages.error(request, f'Ocurrió un error inesperado al crear el usuario: {e}')
             
@@ -74,13 +100,16 @@ def gestion_usuarios(request):
     # -----------------------------------------------------
     # Lógica GET: Mostrar Usuarios
     # -----------------------------------------------------
+    # Usamos select_related para obtener el perfil en la misma consulta
     usuarios_listado = User.objects.all().select_related('perfilusuario').order_by('username')
     context = {'usuarios': usuarios_listado}
     
     return render(request, 'admin_sistema/usuarios.html', context)
 
 
+# Aplicamos la restricción: solo Administrador (Nivel 1) puede acceder
 @login_required
+@user_passes_test(is_admin, login_url='/dashboard/')
 def editar_usuario(request, pk):
     """Maneja la edición de un usuario existente (GET y POST)."""
     
@@ -123,7 +152,7 @@ def editar_usuario(request, pk):
         try:
             usuario.save() # Guarda los campos de User
             
-            # 🚨 Corrección para el POST: Crear perfil si no existe antes de actualizarlo
+            # Obtener/Crear perfil si no existe antes de actualizarlo
             try:
                 perfil = usuario.perfilusuario
             except RelatedObjectDoesNotExist:
@@ -148,12 +177,11 @@ def editar_usuario(request, pk):
     # Lógica GET: Mostrar Formulario
     # -----------------------------------------------------
     
-    # 🚨 Corrección para el GET: Manejar el caso donde el perfil no existe
+    # Manejar el caso donde el perfil no existe
     try:
-        # Intentamos obtener el número de empleado
         num_empleado_actual = usuario.perfilusuario.numero_empleado
     except RelatedObjectDoesNotExist:
-        # El perfil no existe. Lo creamos inmediatamente.
+        # El perfil no existe. Lo creamos.
         PerfilUsuario.objects.create(user=usuario, nivel_acceso=4)
         messages.warning(request, f'Perfil de usuario para "{usuario.username}" creado automáticamente. Por favor, verifique el Nivel y el # Empleado.')
         
@@ -169,12 +197,15 @@ def editar_usuario(request, pk):
     return render(request, 'admin_sistema/editar_usuario.html', context)
 
 
+# Aplicamos la restricción: solo Administrador (Nivel 1) puede acceder
 @login_required
+@user_passes_test(is_admin, login_url='/dashboard/')
 def eliminar_usuario(request, pk):
     """Maneja la eliminación de un usuario."""
     usuario = get_object_or_404(User, pk=pk)
     username = usuario.username
 
+    # Restricciones de eliminación (Superusuario y usuario activo)
     if usuario.is_superuser:
         messages.error(request, f'No se puede eliminar a un Superusuario.')
         return redirect('admin_sistema:usuarios')
@@ -193,15 +224,19 @@ def eliminar_usuario(request, pk):
 
 
 # ********************************************************************
-# VISTAS PLACEHOLDER
+# VISTAS PLACEHOLDER (CON RESTRICCIÓN DE ACCESO)
 # ********************************************************************
 
+# Solo el Administrador (Nivel 1) puede acceder a Proveedores
 @login_required
+@user_passes_test(is_admin, login_url='/dashboard/')
 def gestion_proveedores(request):
     """Muestra la interfaz para gestionar proveedores."""
     return render(request, 'admin_sistema/proveedores.html', {})
 
+# Solo el Administrador (Nivel 1) puede acceder a Reportes
 @login_required
+@user_passes_test(is_admin, login_url='/dashboard/')
 def generar_reportes(request):
     """Muestra la interfaz para generar reportes."""
     return render(request, 'admin_sistema/reportes.html', {})
