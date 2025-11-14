@@ -6,7 +6,6 @@
 
 {% block content %}
     <h1 class="header-title">INVENTARIO</h1>
-    {# SE ELIMINÓ LA PRIMERA ETIQUETA <hr> QUE ESTABA AQUÍ #}
 
     <div class="tab-buttons">
         <button id="tab-stock" onclick="showTab('view-stock')" class="active">INVENTARIO</button>
@@ -32,8 +31,6 @@
                         {% if current_filter == 'Clase' %}checked{% endif %}> 
                     Clase
                 </label>
-
-                {# ❌ ELIMINADO: El filtro por Ubicación fue removido de la interfaz #}
             </div>
             
             {# 💡 RADIO BUTTONS PARA FILTRADO DE MOVIMIENTOS (Elemento y Destino) #}
@@ -60,7 +57,7 @@
     </form>
     
     
-    {# --- TABLA DE INVENTARIO (STOCK) - COLUMNA UBICACIÓN ELIMINADA --- #}
+    {# --- TABLA DE INVENTARIO (STOCK) --- #}
     <div id="view-stock" class="data-view" style="display: none;">
         <h2>Inventario General </h2>
         <table class="data-table">
@@ -81,7 +78,6 @@
                     <td>{{ item.clase.nombre }}</td> 
                     <td>{{ item.descripcion }}</td>
                     <td>{{ item.unidad }}</td>
-                    {# ❌ ELIMINADA: <td>{{ item.ubicacion|default_if_none:"" }}</td> #}
                     
                     <td style="color: {% if item.stock_actual|default:0 <= 0 %}#cc3333{% else %}#339933{% endif %}; font-weight: bold;">
                         {{ item.stock_actual|floatformat:2|default:"0.00" }}
@@ -92,14 +88,14 @@
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" style="text-align: center;">No hay elementos en el inventario.</td> {# ✅ COLSPAN AJUSTADO A 6 #}
+                    <td colspan="6" style="text-align: center;">No hay elementos en el inventario.</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    {# --- TABLA DE MOVIMIENTOS - COLUMNA ALMACÉN MANTENIDA --- #}
+    {# --- TABLA DE MOVIMIENTOS --- #}
     <div id="view-movimientos" class="data-view" style="display: none;">
         <h2>Movimientos Realizados (Entradas y Salidas)</h2>
         <table class="data-table">
@@ -109,7 +105,7 @@
                     <th>Elemento</th>
                     <th>Fecha</th>
                     <th>Folio Doc.</th> 
-                    <th>Almacén</th> {# ✅ MANTENIDA #}
+                    <th>Almacén</th>
                     <th>Destino/Referencia</th> 
                     <th>Responsable</th>
                     <th>Tipo</th>
@@ -132,12 +128,8 @@
                     <td>{{ mov.referencia|default_if_none:"" }}</td>
                     
                     <td>
-                        {# Lógica de responsable personalizada #}
-                        {% if mov.responsable.username == 'lmartinez' %}
-                            Lizeth
-                        {% else %}
-                            {{ mov.responsable.username|default:mov.responsable.get_full_name }}
-                        {% endif %}
+                        {# ✅ CAMBIO CLAVE: Usar el método del modelo para la lógica de visualización #}
+                        {{ mov.get_responsable_display }}
                     </td>
                     
                     {# Tipo de Movimiento #}
@@ -169,10 +161,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
-            // ✅ CORREGIDA: Lista de filtros que pertenecen a la pestaña de INVENTARIO (STOCK)
-            // 'Ubicacion' ha sido removido de la lista de filtros disponibles para Inventario.
             const STOCK_FILTERS = ['Descripcion', 'Clase']; 
-            // Lista de filtros que pertenecen a la pestaña de MOVIMIENTOS
             const MOV_FILTERS = ['Elemento', 'Destino'];
 
             // Función para alternar los controles de filtro
@@ -203,7 +192,6 @@
                 localStorage.setItem('activeTab', tabId);
 
                 // 5. Ajustar el radio button por defecto si no hay filtro activo en la URL O si el filtro de la URL
-                //    es inconsistente con la pestaña.
                 const urlParams = new URLSearchParams(window.location.search);
                 const filtro_por = urlParams.get('filtro_por');
                 const busqueda = urlParams.get('busqueda');
@@ -264,8 +252,7 @@
             // Inicializa la pestaña. Esto llama a showTab() que maneja la visibilidad y el estado de los radio buttons.
             showTab(defaultTab);
             
-            // Si hay búsqueda, aseguramos que el radio button correcto (filtrado por Django) se mantenga chequeado,
-            // anulando cualquier ajuste de 'default' que se haga en showTab().
+            // Si hay búsqueda, aseguramos que el radio button correcto (filtrado por Django) se mantenga chequeado.
             if(isFiltering && filtro_por) {
                 const radio = document.querySelector(`input[name="filtro_por"][value="${filtro_por}"]`);
                 if (radio) {

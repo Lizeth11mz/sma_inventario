@@ -44,9 +44,7 @@ class ElementoInventario(models.Model):
     unidad = models.CharField(max_length=10)
     stock_actual = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
-    # ✅ MEJORA: Se quita 'null=True' y 'blank=True' porque, según tu base de datos, 
-    # la ubicación parece ser un campo esencial (Almacén Zona A, etc.). 
-    # Si permites nulos aquí, tu vista de movimientos podría fallar si el campo está vacío.
+    # Se recomienda mantener NOT NULL si es un campo esencial
     ubicacion = models.CharField(max_length=100) 
     
     costo_unitario = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -68,7 +66,6 @@ class MovimientoInventario(models.Model):
     fecha_movimiento = models.DateTimeField(auto_now_add=True)
     responsable = models.ForeignKey(User, on_delete=models.PROTECT)
     
-    # ✅ CORRECCIÓN 1: El campo precio_unitario ya tiene default=0.00, lo que evita errores.
     precio_unitario = models.DecimalField(
         max_digits=10, 
         decimal_places=2, 
@@ -93,13 +90,40 @@ class MovimientoInventario(models.Model):
         verbose_name="Folio/Factura"
     )
 
-    # ✅ CORRECCIÓN 2: Se mantiene el campo para el destino de la salida.
+    # Campo para el destino de la salida.
     referencia = models.CharField(
         max_length=150, 
         blank=True, 
         null=True, 
-        verbose_name="Destino/Referencia de Salida" # Etiqueta más clara
+        verbose_name="Destino/Referencia de Salida"
     ) 
+
+    # 🚀 MÉTODO PARA PERSONALIZAR EL RESPONSABLE 🚀
+    def get_responsable_display(self):
+        """
+        Devuelve el nombre personalizado (ej. 'Lizeth') para usuarios específicos, 
+        o el nombre completo del usuario si no hay un mapeo.
+        """
+        # Define el mapeo de nombres de usuario a nombres de visualización
+        nombre_mapeado = {
+            'lmartinez': 'Lizeth',
+            # Puedes añadir más usuarios aquí:
+            'lzamora': 'Juan',
+        }
+        
+        username = self.responsable.username
+        
+        # 1. Verificar si el username está en el mapeo
+        if username in nombre_mapeado:
+            return nombre_mapeado[username]
+            
+        # 2. Si no está en el mapeo, intentar devolver el nombre completo (First Name + Last Name)
+        full_name = self.responsable.get_full_name()
+        if full_name:
+            return full_name
+            
+        # 3. Si no hay nombre completo, devolver el username
+        return username
 
     def __str__(self):
         return f"{self.tipo} de {self.elemento.descripcion} ({self.cantidad}) el {self.fecha_movimiento.strftime('%Y-%m-%d')}"
