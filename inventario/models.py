@@ -107,7 +107,7 @@ class MovimientoInventario(models.Model):
         # Define el mapeo de nombres de usuario a nombres de visualización
         nombre_mapeado = {
             'lmartinez': 'Lizeth',
-            # Puedes añadir más usuarios aquí:
+            'hola': 'hola',
             'lzamora': 'Juan',
         }
         
