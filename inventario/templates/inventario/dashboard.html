@@ -1,264 +1,527 @@
 {% extends 'core/base.html' %}
+
 {% load static %}
+
 {% load humanize %}
+
+
 
 {% block title %}Inventario General y Movimientos{% endblock %}
 
+
+
 {% block content %}
-    <h1 class="header-title">INVENTARIO</h1>
 
-    <div class="tab-buttons">
-        <button id="tab-stock" onclick="showTab('view-stock')" class="active">INVENTARIO</button>
-        <button id="tab-movimientos" onclick="showTab('view-movimientos')">MOVIMIENTOS</button>
-    </div>
+    <h1 class="header-title">INVENTARIO</h1>
 
-    {# 🚀 FORMULARIO DE FILTRO #}
-    <form method="GET" action="{% url 'inventario:dashboard' %}" class="filter-search-container">
-        
-        <div class="filter-controls" style="display: flex; gap: 15px; align-items: center;">
-            <span class="filter-label" style="font-weight: bold;">Filtro Por:</span>
-            
-            {# 💡 RADIO BUTTONS PARA FILTRADO DE INVENTARIO (Descripción, Clase) #}
-            <div id="filter-inventario" class="filter-set" style="display: none;">
-                <label class="radio-label">
-                    <input type="radio" name="filtro_por" value="Descripcion" 
-                        {% if current_filter == 'Descripcion' or not current_filter %}checked{% endif %}> 
-                    Descripción (Producto)
-                </label>
-                
-                <label class="radio-label">
-                    <input type="radio" name="filtro_por" value="Clase" 
-                        {% if current_filter == 'Clase' %}checked{% endif %}> 
-                    Clase
-                </label>
-            </div>
-            
-            {# 💡 RADIO BUTTONS PARA FILTRADO DE MOVIMIENTOS (Elemento y Destino) #}
-            <div id="filter-movimientos" class="filter-set" style="display: none;">
-                <label class="radio-label">
-                    <input type="radio" name="filtro_por" value="Elemento" 
-                        {% if current_filter == 'Elemento' %}checked{% endif %}> 
-                    Elemento (Producto)
-                </label>
-                
-                <label class="radio-label">
-                    <input type="radio" name="filtro_por" value="Destino" 
-                        {% if current_filter == 'Destino' %}checked{% endif %}> 
-                    Destino (Referencia)
-                </label>
-            </div>
-        </div>
 
-        <div class="search-box" style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-            <input type="text" name="busqueda" placeholder="Búsqueda..." 
-                    value="{{ current_search|default:'' }}" style="padding: 8px; border-radius: 4px; border: 1px solid #5a646c; background-color: #34495e; color: white;">
-            <button type="submit" style="padding: 8px 15px; background-color: #5a646c; color: white; border: none; border-radius: 4px; cursor: pointer;">Buscar</button>
-        </div>
-    </form>
-    
-    
-    {# --- TABLA DE INVENTARIO (STOCK) --- #}
-    <div id="view-stock" class="data-view" style="display: none;">
-        <h2>Inventario General </h2>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Clase</th>
-                    <th>Descripción</th>
-                    <th>Unidad</th>
-                    <th>Existencia</th>
-                    <th>Costo</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in inventario_list %}
-                <tr>
-                    <td>{{ item.id }}</td>
-                    <td>{{ item.clase.nombre }}</td> 
-                    <td>{{ item.descripcion }}</td>
-                    <td>{{ item.unidad }}</td>
-                    
-                    <td style="color: {% if item.stock_actual|default:0 <= 0 %}#cc3333{% else %}#339933{% endif %}; font-weight: bold;">
-                        {{ item.stock_actual|floatformat:2|default:"0.00" }}
-                    </td> 
-                    
-                    <td>${{ item.costo_unitario|floatformat:2|default:"0.00" }}</td>
-                    
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" style="text-align: center;">No hay elementos en el inventario.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
 
-    {# --- TABLA DE MOVIMIENTOS --- #}
-    <div id="view-movimientos" class="data-view" style="display: none;">
-        <h2>Movimientos Realizados (Entradas y Salidas)</h2>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Elemento</th>
-                    <th>Fecha</th>
-                    <th>Folio Doc.</th> 
-                    <th>Almacén</th>
-                    <th>Destino/Referencia</th> 
-                    <th>Responsable</th>
-                    <th>Tipo</th>
-                    <th>Cantidad</th>
-                    <th>Precio Uni.</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for mov in movimientos_list %}
-                <tr>
-                    <td>{{ forloop.counter }}</td>  {# Corregido para usar el contador del ciclo (1, 2, 3...) #}
-                    <td>{{ mov.elemento.descripcion }}</td>
-                    <td>{{ mov.fecha_movimiento|date:"d/m/Y H:i" }}</td> 
-                    <td>{{ mov.folio_documento|default_if_none:"" }}</td>
-                    
-                    {# Ubicación del Elemento (Almacén) #}
-                    <td>{{ mov.elemento.ubicacion|default_if_none:"" }}</td> 
-                    
-                    {# Destino/Referencia (Proveedor, proyecto, etc.) #}
-                    <td>{{ mov.referencia|default_if_none:"" }}</td>
-                    
-                    <td>
-                        {# ✅ CAMBIO CLAVE: Usar el método del modelo para la lógica de visualización #}
-                        {{ mov.get_responsable_display }}
-                    </td>
-                    
-                    {# Tipo de Movimiento #}
-                    <td>
-                          {% if mov.tipo == 'ENTRADA' %}
-                            <span style="color: green; font-weight: bold;">ENTRADA</span>
-                        {% else %}
-                            <span style="color: red; font-weight: bold;">SALIDA</span>
-                        {% endif %}
-                    </td>
+    <div class="tab-buttons">
 
-                    <td style="color: {% if mov.tipo == 'SALIDA' %}#cc3333{% else %}#339933{% endif %}; font-weight: bold;">
-                        {{ mov.cantidad|floatformat:2 }}
-                    </td>
-                    
-                    {# Precio unitario #}
-                    <td>${{ mov.precio_unitario|floatformat:2|default:"0.00" }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="10" style="text-align: center;">No hay movimientos recientes registrados.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+        <button id="tab-stock" onclick="showTab('view-stock')" class="active">INVENTARIO</button>
 
-    {# --- SCRIPTS DE CONTROL DE PESTAÑAS Y FILTROS --- #}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            
-            const STOCK_FILTERS = ['Descripcion', 'Clase']; 
-            const MOV_FILTERS = ['Elemento', 'Destino'];
+        <button id="tab-movimientos" onclick="showTab('view-movimientos')">MOVIMIENTOS</button>
 
-            // Función para alternar los controles de filtro
-            function updateFilterControls(tabId) {
-                // Muestra solo los radio buttons relevantes para la pestaña
-                document.getElementById('filter-inventario').style.display = tabId === 'view-stock' ? 'flex' : 'none';
-                document.getElementById('filter-movimientos').style.display = tabId === 'view-movimientos' ? 'flex' : 'none';
-            }
+    </div>
 
-            // Función para mostrar la pestaña correcta y actualizar controles/botones
-            window.showTab = function(tabId) {
-                // 1. Oculta todas las vistas y desactiva botones
-                document.querySelectorAll('.data-view').forEach(view => {
-                    view.style.display = 'none';
-                });
-                document.querySelectorAll('.tab-buttons button').forEach(button => {
-                    button.classList.remove('active');
-                });
 
-                // 2. Muestra la vista seleccionada y activa el botón
-                document.getElementById(tabId).style.display = 'block';
-                document.getElementById('tab-' + tabId.split('-')[1]).classList.add('active');
-                
-                // 3. Actualiza los controles de filtro
-                updateFilterControls(tabId);
 
-                // 4. Guarda la pestaña activa
-                localStorage.setItem('activeTab', tabId);
+    {# 🚀 FORMULARIO DE FILTRO #}
 
-                // 5. Ajustar el radio button por defecto si no hay filtro activo en la URL O si el filtro de la URL
-                const urlParams = new URLSearchParams(window.location.search);
-                const filtro_por = urlParams.get('filtro_por');
-                const busqueda = urlParams.get('busqueda');
-                
-                let isFilterInconsistent = false;
-                if (filtro_por) {
-                    const isStockFilter = STOCK_FILTERS.includes(filtro_por);
-                    const isMovFilter = MOV_FILTERS.includes(filtro_por);
-                    
-                    if ((tabId === 'view-stock' && isMovFilter) || (tabId === 'view-movimientos' && isStockFilter)) {
-                        isFilterInconsistent = true;
-                    }
-                }
+    <form method="GET" action="{% url 'inventario:dashboard' %}" class="filter-search-container">
 
-                // Determinar si necesitamos forzar el radio button por defecto
-                const needsDefaultRadio = !filtro_por || isFilterInconsistent;
-                
-                if (needsDefaultRadio && !busqueda) { // Solo si no hay búsqueda activa y el filtro no está bien puesto
-                    let defaultFilterValue = '';
-                    if (tabId === 'view-stock') {
-                        defaultFilterValue = 'Descripcion';
-                    } else if (tabId === 'view-movimientos') {
-                        defaultFilterValue = 'Elemento';
-                    }
+       
 
-                    // Chequear el radio button por defecto
-                    if (defaultFilterValue) {
-                        const defaultRadio = document.querySelector(`input[name="filtro_por"][value="${defaultFilterValue}"]`);
-                        if (defaultRadio) {
-                            defaultRadio.checked = true;
-                        }
-                    }
-                }
-            }
+        <div class="filter-controls" style="display: flex; gap: 15px; align-items: center;">
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const busqueda = urlParams.get('busqueda');
-            const filtro_por = urlParams.get('filtro_por');
-            const isFiltering = busqueda && busqueda !== '';
-            let defaultTab = 'view-stock';
+            <span class="filter-label" style="font-weight: bold;">Filtro Por:</span>
 
-            // 🔑 Lógica de inicialización:
-            if (isFiltering && filtro_por) {
-                // Si hay búsqueda y filtro, la pestaña debe coincidir con el filtro usado
-                if (MOV_FILTERS.includes(filtro_por)) { // Filtros de movimientos
-                    defaultTab = 'view-movimientos';
-                } else if (STOCK_FILTERS.includes(filtro_por)) { // Filtros de inventario
-                    defaultTab = 'view-stock';
-                }
-            } else {
-                // Si no hay búsqueda, usamos la pestaña guardada en localStorage, sino 'view-stock'
-                const storedTab = localStorage.getItem('activeTab');
-                if (storedTab) {
-                    defaultTab = storedTab;
-                }
-            }
+           
 
-            // Inicializa la pestaña. Esto llama a showTab() que maneja la visibilidad y el estado de los radio buttons.
-            showTab(defaultTab);
-            
-            // Si hay búsqueda, aseguramos que el radio button correcto (filtrado por Django) se mantenga chequeado.
-            if(isFiltering && filtro_por) {
-                const radio = document.querySelector(`input[name="filtro_por"][value="${filtro_por}"]`);
-                if (radio) {
-                    radio.checked = true;
-                }
-            }
-        });
-    </script>
+            {# 💡 RADIO BUTTONS PARA FILTRADO DE INVENTARIO (Descripción, Clase) #}
+
+            <div id="filter-inventario" class="filter-set" style="display: none;">
+
+                <label class="radio-label">
+
+                    <input type="radio" name="filtro_por" value="Descripcion"
+
+                        {% if current_filter == 'Descripcion' or not current_filter %}checked{% endif %}>
+
+                    Descripción (Producto)
+
+                </label>
+
+               
+
+                <label class="radio-label">
+
+                    <input type="radio" name="filtro_por" value="Clase"
+
+                        {% if current_filter == 'Clase' %}checked{% endif %}>
+
+                    Clase
+
+                </label>
+
+            </div>
+
+           
+
+            {# 💡 RADIO BUTTONS PARA FILTRADO DE MOVIMIENTOS (Elemento y Destino) #}
+
+            <div id="filter-movimientos" class="filter-set" style="display: none;">
+
+                <label class="radio-label">
+
+                    <input type="radio" name="filtro_por" value="Elemento"
+
+                        {% if current_filter == 'Elemento' %}checked{% endif %}>
+
+                    Elemento (Producto)
+
+                </label>
+
+               
+
+                <label class="radio-label">
+
+                    <input type="radio" name="filtro_por" value="Destino"
+
+                        {% if current_filter == 'Destino' %}checked{% endif %}>
+
+                    Destino (Referencia)
+
+                </label>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="search-box" style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+
+            <input type="text" name="busqueda" placeholder="Búsqueda..."
+
+                    value="{{ current_search|default:'' }}" style="padding: 8px; border-radius: 4px; border: 1px solid #5a646c; background-color: #34495e; color: white;">
+
+            <button type="submit" style="padding: 8px 15px; background-color: #5a646c; color: white; border: none; border-radius: 4px; cursor: pointer;">Buscar</button>
+
+        </div>
+
+    </form>
+
+   
+
+   
+
+    {# --- TABLA DE INVENTARIO (STOCK) --- #}
+
+    <div id="view-stock" class="data-view" style="display: none;">
+
+        <h2>Inventario General </h2>
+
+        <table class="data-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>ID</th>
+
+                    <th>Clase</th>
+
+                    <th>Descripción</th>
+
+                    <th>Unidad</th>
+
+                    <th>Existencia</th>
+
+                    <th>Costo</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for item in inventario_list %}
+
+                <tr>
+
+                    <td>{{ item.id }}</td>
+
+                    <td>{{ item.clase.nombre }}</td>
+
+                    <td>{{ item.descripcion }}</td>
+
+                    <td>{{ item.unidad }}</td>
+
+                   
+
+                    <td style="color: {% if item.stock_actual|default:0 <= 0 %}#cc3333{% else %}#339933{% endif %}; font-weight: bold;">
+
+                        {{ item.stock_actual|floatformat:2|default:"0.00" }}
+
+                    </td>
+
+                   
+
+                    <td>${{ item.costo_unitario|floatformat:2|default:"0.00" }}</td>
+
+                   
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="6" style="text-align: center;">No hay elementos en el inventario.</td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+
+    {# --- TABLA DE MOVIMIENTOS --- #}
+
+    <div id="view-movimientos" class="data-view" style="display: none;">
+
+        <h2>Movimientos Realizados (Entradas y Salidas)</h2>
+
+        <table class="data-table">
+
+            <thead>
+
+                <tr>
+
+                    <th>ID</th>
+
+                    <th>Elemento</th>
+
+                    <th>Fecha</th>
+
+                    <th>Folio Doc.</th>
+
+                    <th>Almacén</th>
+
+                    <th>Destino/Referencia</th>
+
+                    <th>Responsable</th>
+
+                    <th>Tipo</th>
+
+                    <th>Cantidad</th>
+
+                    <th>Precio Uni.</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for mov in movimientos_list %}
+
+                <tr>
+
+                    <td>{{ mov.id }}</td>
+
+                    <td>{{ mov.elemento.descripcion }}</td>
+
+                    <td>{{ mov.fecha_movimiento|date:"d/m/Y H:i" }}</td>
+
+                    <td>{{ mov.folio_documento|default_if_none:"" }}</td>
+
+                   
+
+                    {# Ubicación del Elemento (Almacén) #}
+
+                    <td>{{ mov.elemento.ubicacion|default_if_none:"" }}</td>
+
+                   
+
+                    {# Destino/Referencia (Proveedor, proyecto, etc.) #}
+
+                    <td>{{ mov.referencia|default_if_none:"" }}</td>
+
+                   
+
+                    <td>
+
+                        {# ✅ CAMBIO CLAVE: Usar el método del modelo para la lógica de visualización #}
+
+                        {{ mov.get_responsable_display }}
+
+                    </td>
+
+                   
+
+                    {# Tipo de Movimiento #}
+
+                    <td>
+
+                          {% if mov.tipo == 'ENTRADA' %}
+
+                            <span style="color: green; font-weight: bold;">ENTRADA</span>
+
+                        {% else %}
+
+                            <span style="color: red; font-weight: bold;">SALIDA</span>
+
+                        {% endif %}
+
+                    </td>
+
+
+
+                    <td style="color: {% if mov.tipo == 'SALIDA' %}#cc3333{% else %}#339933{% endif %}; font-weight: bold;">
+
+                        {{ mov.cantidad|floatformat:2 }}
+
+                    </td>
+
+                   
+
+                    {# Precio unitario #}
+
+                    <td>${{ mov.precio_unitario|floatformat:2|default:"0.00" }}</td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+
+                    <td colspan="10" style="text-align: center;">No hay movimientos recientes registrados.</td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+
+    {# --- SCRIPTS DE CONTROL DE PESTAÑAS Y FILTROS --- #}
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+           
+
+            const STOCK_FILTERS = ['Descripcion', 'Clase'];
+
+            const MOV_FILTERS = ['Elemento', 'Destino'];
+
+
+
+            // Función para alternar los controles de filtro
+
+            function updateFilterControls(tabId) {
+
+                // Muestra solo los radio buttons relevantes para la pestaña
+
+                document.getElementById('filter-inventario').style.display = tabId === 'view-stock' ? 'flex' : 'none';
+
+                document.getElementById('filter-movimientos').style.display = tabId === 'view-movimientos' ? 'flex' : 'none';
+
+            }
+
+
+
+            // Función para mostrar la pestaña correcta y actualizar controles/botones
+
+            window.showTab = function(tabId) {
+
+                // 1. Oculta todas las vistas y desactiva botones
+
+                document.querySelectorAll('.data-view').forEach(view => {
+
+                    view.style.display = 'none';
+
+                });
+
+                document.querySelectorAll('.tab-buttons button').forEach(button => {
+
+                    button.classList.remove('active');
+
+                });
+
+
+
+                // 2. Muestra la vista seleccionada y activa el botón
+
+                document.getElementById(tabId).style.display = 'block';
+
+                document.getElementById('tab-' + tabId.split('-')[1]).classList.add('active');
+
+               
+
+                // 3. Actualiza los controles de filtro
+
+                updateFilterControls(tabId);
+
+
+
+                // 4. Guarda la pestaña activa
+
+                localStorage.setItem('activeTab', tabId);
+
+
+
+                // 5. Ajustar el radio button por defecto si no hay filtro activo en la URL O si el filtro de la URL
+
+                const urlParams = new URLSearchParams(window.location.search);
+
+                const filtro_por = urlParams.get('filtro_por');
+
+                const busqueda = urlParams.get('busqueda');
+
+               
+
+                let isFilterInconsistent = false;
+
+                if (filtro_por) {
+
+                    const isStockFilter = STOCK_FILTERS.includes(filtro_por);
+
+                    const isMovFilter = MOV_FILTERS.includes(filtro_por);
+
+                   
+
+                    if ((tabId === 'view-stock' && isMovFilter) || (tabId === 'view-movimientos' && isStockFilter)) {
+
+                        isFilterInconsistent = true;
+
+                    }
+
+                }
+
+
+
+                // Determinar si necesitamos forzar el radio button por defecto
+
+                const needsDefaultRadio = !filtro_por || isFilterInconsistent;
+
+               
+
+                if (needsDefaultRadio && !busqueda) { // Solo si no hay búsqueda activa y el filtro no está bien puesto
+
+                    let defaultFilterValue = '';
+
+                    if (tabId === 'view-stock') {
+
+                        defaultFilterValue = 'Descripcion';
+
+                    } else if (tabId === 'view-movimientos') {
+
+                        defaultFilterValue = 'Elemento';
+
+                    }
+
+
+
+                    // Chequear el radio button por defecto
+
+                    if (defaultFilterValue) {
+
+                        const defaultRadio = document.querySelector(`input[name="filtro_por"][value="${defaultFilterValue}"]`);
+
+                        if (defaultRadio) {
+
+                            defaultRadio.checked = true;
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+
+
+            const urlParams = new URLSearchParams(window.location.search);
+
+            const busqueda = urlParams.get('busqueda');
+
+            const filtro_por = urlParams.get('filtro_por');
+
+            const isFiltering = busqueda && busqueda !== '';
+
+            let defaultTab = 'view-stock';
+
+
+
+            // 🔑 Lógica de inicialización:
+
+            if (isFiltering && filtro_por) {
+
+                // Si hay búsqueda y filtro, la pestaña debe coincidir con el filtro usado
+
+                if (MOV_FILTERS.includes(filtro_por)) { // Filtros de movimientos
+
+                    defaultTab = 'view-movimientos';
+
+                } else if (STOCK_FILTERS.includes(filtro_por)) { // Filtros de inventario
+
+                    defaultTab = 'view-stock';
+
+                }
+
+            } else {
+
+                // Si no hay búsqueda, usamos la pestaña guardada en localStorage, sino 'view-stock'
+
+                const storedTab = localStorage.getItem('activeTab');
+
+                if (storedTab) {
+
+                    defaultTab = storedTab;
+
+                }
+
+            }
+
+
+
+            // Inicializa la pestaña. Esto llama a showTab() que maneja la visibilidad y el estado de los radio buttons.
+
+            showTab(defaultTab);
+
+           
+
+            // Si hay búsqueda, aseguramos que el radio button correcto (filtrado por Django) se mantenga chequeado.
+
+            if(isFiltering && filtro_por) {
+
+                const radio = document.querySelector(`input[name="filtro_por"][value="${filtro_por}"]`);
+
+                if (radio) {
+
+                    radio.checked = true;
+
+                }
+
+            }
+
+        });
+
+    </script>
+
 {% endblock %}
