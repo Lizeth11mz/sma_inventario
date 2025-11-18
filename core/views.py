@@ -1,8 +1,33 @@
 # core/views.py
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout # ⬅️ Necesario para cerrar la sesión
-from django.urls import reverse         # ⬅️ Necesario para la redirección controlada
+from django.contrib.auth import logout 
+from django.urls import reverse 
+
+# ====================================
+# 1. VISTAS PÚBLICAS (ACCESO LIBRE)
+# Estas vistas renderizan páginas sin requerir autenticación.
+# ====================================
+
+def index(request):
+    """
+    Renderiza la página de inicio principal (index.html).
+    Esta es la puerta de entrada pública a la aplicación.
+    """
+    return render(request, 'core/index.html')
+
+def bienvenido(request):
+    """
+    Renderiza la página de bienvenida (bienvenidos.html).
+    Esta vista puede ser usada después de un login exitoso.
+    """
+    # Nota: Usamos 'bienvenidos.html' ya que creaste ese archivo.
+    return render(request, 'core/bienvenidos.html')
+
+
+# ====================================
+# 2. VISTAS DE AUTENTICACIÓN Y REDIRECCIÓN
+# ====================================
 
 # 1. VISTA DE INICIO (Redirige al Dashboard)
 @login_required

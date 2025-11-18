@@ -27,7 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    'django.contrib.humanize',  # ⬅️ ¡CORRECCIÓN AÑADIDA AQUÍ!
+    'django.contrib.humanize', 
     
     # Mis Aplicaciones:
     'core',
@@ -104,19 +104,30 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'es-mx'  # Idioma español de México
+LANGUAGE_CODE = 'es-mx' 
 
-TIME_ZONE = 'America/Mexico_City' # Zona horaria de México
+TIME_ZONE = 'America/Mexico_City' 
 
 USE_I18N = True
 
 USE_TZ = True # Usar zonas horarias
 
-# Static files (CSS, JavaScript, Images)
+# ==========================================================
+# CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS (STATIC FILES)
+# ==========================================================
+
+# 1. URL base para servir archivos estáticos (CSS, JS, imágenes).
 STATIC_URL = '/static/'
+
+# 2. Directorios adicionales donde Django buscará archivos estáticos.
+# Apunta a la carpeta 'static' en la raíz del proyecto.
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    BASE_DIR / "static",
 ]
+
+# 3. Directorio donde collectstatic recogerá todos los archivos para producción.
+STATIC_ROOT = BASE_DIR / "staticfiles" 
+
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

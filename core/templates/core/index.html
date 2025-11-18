@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ALMACEN SMA</title>
+    <link rel="stylesheet" href="{% static 'styles.css' %}">
+</head>
+<body>
+
+    <header>
+        <h1>ALMACEN SMA</h1>
+    </header>
+
+    <main>
+        <section id="almacen-imagen" class="center-content">
+            <img src="{% static 'img/almacen-imagen.jpg' %}" alt="Imagen del Almacén SMA" class="main-image">
+        </section>
+        
+        <section id="acceso-sistema" class="access-button-container">
+            <a href="{% url 'bienvenido' %}" class="main-access-button">
+                ACCEDER AL SISTEMA
+            </a>
+        </section>
+    </main>
+    
+    <footer>
+        <p>&copy; 2025 ALMACEN SMA. Todos los derechos reservados.</p>
+    </footer>
+
+</body>
+</html>

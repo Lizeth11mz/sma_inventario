@@ -1,0 +1,61 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bienvenido al Sistema de Inventario</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .btn-custom { transition: all 0.2s ease-in-out; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-decoration: none; }
+        .btn-admin:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(249,115,22,0.3); }
+        .btn-user:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(59,130,246,0.3); }
+        .btn-warehouse:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(16,185,129,0.3); }
+    </style>
+</head>
+
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-lg bg-white p-8 md:p-12 rounded-xl shadow-2xl border border-gray-100">
+
+        <div class="text-center">
+            <svg class="mx-auto h-12 w-12 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M4 7v10l2 2 4-2 4 2 4-2 2 2V7m0 10l-2-2-4 2-4-2-4 2-2-2M4 7l2-2 4 2 4-2 4 2 2-2M4 7l2 2 4-2 4 2 4-2 2 2" />
+            </svg>
+
+            <h1 class="text-3xl font-bold text-gray-800 mt-4">Bienvenido a SMA Inventario</h1>
+            <p class="text-gray-500 mt-2">Selecciona tu rol para acceder al sistema.</p>
+        </div>
+
+        <div class="mt-8 space-y-4">
+
+            <a href="{% url 'admin_sistema:login_admin' %}"
+                class="btn-custom btn-admin w-full flex items-center justify-center p-4 rounded-lg bg-orange-500 text-white font-semibold text-lg">
+                Acceso para Administradores
+            </a>
+
+            <a href="{% url 'admin_sistema:login_warehouse' %}"
+                class="btn-custom btn-warehouse w-full flex items-center justify-center p-4 rounded-lg bg-green-500 text-white font-semibold text-lg">
+                Acceso para Jefe de Almacén
+            </a>
+
+            <a href="{% url 'admin_sistema:login_user' %}"
+                class="btn-custom btn-user w-full flex items-center justify-center p-4 rounded-lg bg-blue-500 text-white font-semibold text-lg">
+                Acceso para Responsable de Área
+            </a>
+
+        </div>
+
+        <p class="mt-6 text-sm text-center text-gray-400">
+            © 2025 SMA Inventario. Todos los derechos reservados.
+        </p>
+
+    </div>
+
+</body>
+</html>
