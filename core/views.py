@@ -1,52 +1,99 @@
 # core/views.py
+
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth import logout 
-from django.urls import reverse 
+from django.contrib.auth import authenticate, login, logout
+from django.contrib import messages
+from django.urls import reverse
+from core.models import PerfilUsuario
 
-# ====================================
-# 1. VISTAS PÚBLICAS (ACCESO LIBRE)
-# Estas vistas renderizan páginas sin requerir autenticación.
-# ====================================
+
+# ============================================================
+# 1. VISTAS PÚBLICAS
+# ============================================================
 
 def index(request):
-    """
-    Renderiza la página de inicio principal (index.html).
-    Esta es la puerta de entrada pública a la aplicación.
-    """
+    """Página principal."""
     return render(request, 'core/index.html')
 
+
 def bienvenido(request):
-    """
-    Renderiza la página de bienvenida (bienvenidos.html).
-    Esta vista puede ser usada después de un login exitoso.
-    """
-    # Nota: Usamos 'bienvenidos.html' ya que creaste ese archivo.
+    """Página donde se elige el rol (Administrador / Responsable / Jefe)."""
     return render(request, 'core/bienvenidos.html')
 
 
-# ====================================
-# 2. VISTAS DE AUTENTICACIÓN Y REDIRECCIÓN
-# ====================================
+# ============================================================
+# 2. LOGIN UNIVERSAL PARA LOS 3 ROLES
+# ============================================================
 
-# 1. VISTA DE INICIO (Redirige al Dashboard)
+def login_view(request):
+
+    # Saber cuál botón se presionó:
+    # admin / responsable / jefe
+    rol = request.GET.get("role", None)
+
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is None:
+            messages.error(request, "Usuario o contraseña incorrectos.")
+            return render(request, "core/login.html")
+
+        # Verificar si tiene perfil
+        try:
+            nivel = user.perfilusuario.nivel_acceso
+        except PerfilUsuario.DoesNotExist:
+            messages.error(request, "El usuario no tiene un perfil de acceso.")
+            return render(request, "core/login.html")
+
+        # ============================================================
+        # VALIDACIÓN SEGÚN BOTÓN DE ACCESO
+        # ============================================================
+
+        if rol == "admin" and nivel != 1:
+            messages.error(request, "Este acceso es exclusivo para Administradores.")
+            return render(request, "core/login.html")
+
+        if rol == "responsable" and nivel != 2:
+            messages.error(request, "Este acceso es exclusivo para Responsables de Área.")
+            return render(request, "core/login.html")
+
+        if rol == "jefe" and nivel != 3:
+            messages.error(request, "Este acceso es exclusivo para Jefes de Almacén.")
+            return render(request, "core/login.html")
+
+        # Login válido
+        login(request, user)
+
+        # ============================================================
+        # REDIRECCIÓN SEGÚN NIVEL DE ACCESO
+        # ============================================================
+
+        if nivel == 1:
+            return redirect("admin_sistema:usuarios")
+
+        elif nivel == 2:
+            return redirect("inventario:dashboard_responsable")
+
+        elif nivel == 3:
+            return redirect("inventario:dashboard_jefe")
+
+    return render(request, "core/login.html")
+
+
+# ============================================================
+# 3. DASHBOARD Y LOGOUT
+# ============================================================
+
 @login_required
 def home_dashboard(request):
-    """
-    Si el usuario está logueado, lo redirige al dashboard de inventario.
-    """
-    # Usamos redirect al nombre de la ruta que definiste en inventario/urls.py
-    return redirect('inventario:dashboard')
+    """Dashboard genérico."""
+    return redirect("inventario:dashboard")
 
 
-# 2. VISTA DE LOGOUT PERSONALIZADA (SOLUCIONA EL ?next=/)
 def custom_logout_view(request):
-    """
-    Cierra la sesión y redirige directamente a la página de login.
-    Esto asegura que no se use el parámetro 'next'.
-    """
-    # Llama a la función de logout de Django
     logout(request)
-    
-    # Redirige a la URL nombrada 'core:login' sin usar el parámetro 'next'.
-    return redirect(reverse('core:login'))
+    return redirect(reverse("core:login"))

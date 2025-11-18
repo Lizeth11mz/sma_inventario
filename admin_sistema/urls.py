@@ -3,16 +3,34 @@
 from django.urls import path
 from . import views
 
-# Define el nombre del espacio para usarlo en {% url 'admin_sistema:nombre_ruta' %}
+# Namespace para usar: {% url 'admin_sistema:nombre' %}
 app_name = 'admin_sistema'
 
 urlpatterns = [
-    # Rutas para la Gestión de Usuarios (Listar y Crear - gestion_usuarios)
+
+    # ============================
+    # 1) LOGIN SEGÚN TIPO DE USUARIO
+    # ============================
+
+    # Coincide con {% url 'admin_sistema:login_admin' %}
+    path('admin/login/', views.login_admin, name='login_admin'),
+
+    # Coincide con {% url 'admin_sistema:login_warehouse' %}
+    path('almacen/login/', views.login_warehouse, name='login_warehouse'),
+
+    # Coincide con {% url 'admin_sistema:login_user' %}
+    path('usuario/login/', views.login_user, name='login_user'),
+
+    # ============================
+    # 2) GESTIÓN DE USUARIOS (CRUD)
+    # ============================
+
+    # Lista de usuarios
     path('usuarios/', views.gestion_usuarios, name='usuarios'),
-    
-    # RUTA: Edición de usuarios (usando la clave primaria)
+
+    # Editar usuario por ID
     path('usuarios/editar/<int:pk>/', views.editar_usuario, name='editar_usuario'),
-    
-    # RUTA: Eliminación de usuarios (usando la clave primaria)
+
+    # Eliminar usuario por ID
     path('usuarios/eliminar/<int:pk>/', views.eliminar_usuario, name='eliminar_usuario'),
 ]

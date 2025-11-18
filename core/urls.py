@@ -1,7 +1,7 @@
 # core/urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from . import views # Importa las vistas personalizadas
+from . import views   # Importa tus vistas personalizadas
 
 app_name = 'core'
 
@@ -9,25 +9,31 @@ urlpatterns = [
     # ====================================
     # 1. VISTAS PÚBLICAS (ACCESO LIBRE)
     # ====================================
-    # RUTA RAÍZ: Muestra la página de inicio (index.html) para todos los visitantes.
-    path('', views.index, name='index'), 
     
-    # RUTA BIENVENIDA: Para usar después de login o como página informativa.
+    # Página principal (index.html)
+    path('', views.index, name='index'),
+
+    # Página intermedia de bienvenida
     path('bienvenido/', views.bienvenido, name='bienvenido'),
-    
+
     # ====================================
-    # 2. VISTAS DE AUTENTICACIÓN
+    # 2. AUTENTICACIÓN DEL SISTEMA
     # ====================================
-    # LOGIN: Mantiene la vista integrada de Django.
-    path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),
-    
-    # LOGOUT: Apunta a la vista personalizada para un cierre limpio.
+
+    # Login usando plantilla core/login.html
+    path(
+        'login/',
+        auth_views.LoginView.as_view(template_name='core/login.html'),
+        name='login'
+    ),
+
+    # Logout usando tu vista personalizada
     path('logout/', views.custom_logout_view, name='logout'),
 
     # ====================================
-    # 3. VISTAS AUTENTICADAS
+    # 3. VISTAS PROTEGIDAS (requieren login)
     # ====================================
-    # DASHBOARD: Solo accesible si estás logueado.
-    # Nota: Cambiamos el nombre de la ruta a 'dashboard' para ser más claro.
+
+    # Dashboard general del sistema
     path('dashboard/', views.home_dashboard, name='dashboard'),
 ]

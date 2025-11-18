@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ALMACEN SMA</title>
-    <link rel="stylesheet" href="{% static 'styles.css' %}">
+    <!-- 1. CORRECCIÓN: Usamos 'css/styles.css' para la ruta correcta. -->
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
 
@@ -15,11 +16,16 @@
 
     <main>
         <section id="almacen-imagen" class="center-content">
-            <img src="{% static 'img/almacen-imagen.jpg' %}" alt="Imagen del Almacén SMA" class="main-image">
+            <img 
+             src="{% static 'img/almacen-imagen.jpg' %}" 
+             alt="Imagen del Almacén SMA" 
+             class="main-image"
+             onerror="this.onerror=null;this.src='https://placehold.co/650x400/007bff/f5f6fa?text=ALMACEN+SMA+Image';"
+            >
         </section>
         
         <section id="acceso-sistema" class="access-button-container">
-            <a href="{% url 'bienvenido' %}" class="main-access-button">
+            <a href="{% url 'core:bienvenido' %}" class="main-access-button">
                 ACCEDER AL SISTEMA
             </a>
         </section>
