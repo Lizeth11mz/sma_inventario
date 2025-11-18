@@ -8,14 +8,16 @@ urlpatterns = [
     
     # 2. RUTA PRINCIPAL (CORE)
     # Incluye las URLs de la aplicación 'core' en la raíz del proyecto.
-    # Aquí se manejan el index, login/logout, y el dashboard principal.
+    # Maneja index, login/logout, bienvenido, y el dashboard principal.
     path('', include('core.urls')), 
     
     # 3. RUTA INVENTARIO
     # Incluye las URLs de la aplicación 'inventario' con el prefijo '/inventario/'.
+    # Nota: No se requiere namespace aquí a menos que tengas conflictos de nombres.
     path('inventario/', include('inventario.urls')), 
     
     # 4. RUTA ADMINISTRACIÓN DEL SISTEMA
-    # Incluye las URLs de la aplicación 'admin_sistema' con el prefijo '/administracion/'.
-    path('administracion/', include('admin_sistema.urls')), 
+    # FIX IMPORTANTE: Incluimos las URLs de la aplicación 'admin_sistema' 
+    # y DEFINIMOS EL NAMESPACE para que funcionen las llamadas tipo 'admin_sistema:login_...'
+    path('administracion/', include('admin_sistema.urls', namespace='admin_sistema')), 
 ]
