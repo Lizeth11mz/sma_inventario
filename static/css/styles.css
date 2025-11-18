@@ -584,7 +584,7 @@ footer p {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
     display: block;
     /* --- CORRECCIÓN CLAVE: Resuelve la imagen volteada --- */
-    transform: rotate(0deg) !important; 
+    transform: rotate(180deg) !important; 
     object-fit: cover; /* Asegura que la imagen se ajuste bien */
 }
 
