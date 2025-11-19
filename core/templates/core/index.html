@@ -5,8 +5,146 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ALMACEN SMA</title>
-    <!-- 1. CORRECCIÓN: Usamos 'css/styles.css' para la ruta correcta. -->
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <style>
+        /* ==================================== */
+        /* 1. ESTILOS GENERALES Y BASE */
+        /* ==================================== */
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Estilos del Encabezado (Header) */
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            /* Ajuste para centrar el título */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80px; 
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+
+        /* El nav estará vacío, pero mantenemos los selectores por si se usa en el futuro */
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 5px 10px;
+            transition: background-color 0.3s;
+        }
+
+        /* Estilos del Contenido Principal (Main/Sections) */
+        main {
+            padding: 20px;
+            max-width: 1000px;
+            margin: 20px auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Estilos del Pie de Página (Footer) */
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            bottom: 0;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        /* ==================================== */
+        /* 2. ESTILOS DE IMAGEN Y BOTÓN */
+        /* ==================================== */
+
+        /* Estilo para asegurar que el contenido se centre */
+        .center-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* Se redujo la altura mínima para evitar un espacio excesivo en pantallas grandes */
+            min-height: 40vh; 
+            padding: 20px;
+        }
+
+        /* Estilo para la imagen principal */
+        .main-image {
+            max-width: 100%; 
+            height: auto; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); 
+        }
+
+        /* Contenedor del Botón de Acceso */
+        .access-button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px; 
+            padding-bottom: 30px;
+        }
+
+        /* Estilos para el botón principal de acceso */
+        .main-access-button {
+            text-decoration: none;
+            padding: 15px 30px;
+            background-color: #007bff; /* Azul primario */
+            color: white;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 8px;
+            transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+        }
+
+        .main-access-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        /* ==================================== */
+        /* 3. RESPONSIVE DESIGN */
+        /* ==================================== */
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 2em;
+            }
+
+            main {
+                padding: 10px;
+                margin: 10px auto;
+            }
+            
+            .main-access-button {
+                font-size: 1.2em;
+                padding: 12px 20px;
+            }
+        }
+    </style>
 </head>
 <body>
 
