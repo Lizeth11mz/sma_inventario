@@ -1,7 +1,7 @@
 # core/urls.py
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from . import views   # Importa tus vistas personalizadas
+from . import views  # Importa tus vistas personalizadas
 
 app_name = 'core'
 
@@ -28,6 +28,8 @@ urlpatterns = [
     ),
 
     # Logout usando tu vista personalizada
+    # Al usar esta vista, custom_logout_view debe manejar la redirección o
+    # confiar en LOGOUT_REDIRECT_URL definido en settings.py.
     path('logout/', views.custom_logout_view, name='logout'),
 
     # ====================================

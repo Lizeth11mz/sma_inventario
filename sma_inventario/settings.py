@@ -3,6 +3,7 @@ import os
 from pathlib import Path
 import pymysql
 
+# Instala pymysql para usarlo como driver de MySQL
 pymysql.install_as_MySQLdb()
 
 # ==========================================================
@@ -114,8 +115,6 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # 2. Directorios adicionales donde Django debe buscar archivos estáticos.
-# Aquí indicamos la carpeta 'static' que está en la raíz del proyecto (a la par de 'core', 'inventario', etc.)
-# Si tu CSS está en C:\...\sma_inventario\static\css\styles.css, esta configuración es correcta.
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
@@ -128,7 +127,8 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # ==========================================================
 LOGIN_REDIRECT_URL = '/inventario/dashboard/'
 LOGIN_URL = 'core:login'
-LOGOUT_REDIRECT_URL = 'core:login'
+# ✅ CORRECCIÓN FINAL: Se usa el nombre de la vista 'core:index' para redirigir a la página principal.
+LOGOUT_REDIRECT_URL = 'core:index' 
 
 # ==========================================================
 # AUTO FIELD
