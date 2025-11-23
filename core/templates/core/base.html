@@ -94,6 +94,8 @@
                 
                 {# LÓGICA DE PERMISOS: Solo si existe el perfil Y el nivel es 1 (Administrador) #}
                 {% if user_profile and user_profile.nivel_acceso == 1 %}
+                    
+                    {# 🚨 CORRECCIÓN CRÍTICA DE LA LÍNEA 97: reports -> reportes #}
                     <a href="{% url 'inventario:reportes' %}" class="{% if 'reportes' in request.path %}active{% endif %}">
                         <span class="icon">📊</span> Reportes
                     </a>

@@ -4,58 +4,210 @@
 {% block title %}Generación de Reportes{% endblock %}
 
 {% block content %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
     <h1 class="header-title">REPORTES</h1>
 
-    <fieldset class="form-section">
-        <legend style="color: var(--color-primary);">FILTROS DE REPORTE</legend>
-        <div class="form-row">
-            <div class="form-group" style="width: 20%;">
-                <label>Tipo de Reporte</label>
-                <select>
-                    <option>Inventario General</option>
-                    <option>Movimientos (Entradas/Salidas)</option>
-                    <option>Entradas por Proveedor</option>
-                    <option>Salidas por Destino</option>
-                </select>
-            </div>
-            <div class="form-group" style="width: 20%;">
-                <label>Fecha Inicio</label>
-                <input type="date">
-            </div>
-            <div class="form-group" style="width: 20%;">
-                <label>Fecha Fin</label>
-                <input type="date">
-            </div>
-            <div class="form-group" style="width: 20%;">
-                <label>Formato</label>
-                <select>
-                    <option>PDF</option>
-                    <option>Excel (XLSX)</option>
-                </select>
-            </div>
-            <button class="btn-primary" style="width: 150px; margin-top: 15px;">Generar Reporte</button>
+    <div class="kpi-row" style="display: flex; gap: 20px; margin-bottom: 30px;">
+        <div class="kpi-card" style="flex: 1; padding: 15px; background-color: #303030; border-left: 5px solid #007bff; border-radius: 5px;">
+            <h3>💰 Valor Total Inventario</h3>
+            <p style="font-size: 1.8em; font-weight: bold;">${{ valor_inventario|default:"0.00"|floatformat:2 }}</p>
         </div>
+        
+        <div class="kpi-card" style="flex: 1; padding: 15px; background-color: #303030; border-left: 5px solid #28a745; border-radius: 5px;">
+            <h3>🟢 Entradas (Últimos 30 días)</h3>
+            <p style="font-size: 1.8em; font-weight: bold;">${{ valor_entradas|default:"0.00"|floatformat:2 }}</p>
+        </div>
+
+        <div class="kpi-card" style="flex: 1; padding: 15px; background-color: #303030; border-left: 5px solid #dc3545; border-radius: 5px;">
+            <h3>🔴 Salidas (Últimos 30 días)</h3>
+            <p style="font-size: 1.8em; font-weight: bold;">${{ valor_salidas|default:"0.00"|floatformat:2 }}</p>
+        </div>
+    </div>
+
+    <fieldset class="form-section">
+        <legend style="color: var(--color-primary);">FILTROS DE REPORTE Y GENERACIÓN</legend>
+        
+        <form method="GET" id="reporteForm" action="{% url 'inventario:generar_reporte' %}">
+            {% csrf_token %} 
+            <div class="form-row">
+                
+                <div class="form-group" style="width: 20%;">
+                    <label for="tipo_reporte">Tipo de Reporte</label>
+                    <select id="tipo_reporte" name="tipo_reporte" onchange="actualizarActionFormulario()">
+                        <option value="inventario_general">Inventario General</option>
+                        <option value="movimientos">Movimientos (Entradas/Salidas)</option>
+                        <option value="ejercicio_mensual">Ejercicio mensual</option>
+                        <option value="ejercicio_financiero">Ejercicio financiero</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" style="width: 20%;">
+                    <label for="fecha_inicio">Fecha Inicio</label>
+                    <input type="date" id="fecha_inicio" name="fecha_inicio">
+                </div>
+                
+                <div class="form-group" style="width: 20%;">
+                    <label for="fecha_fin">Fecha Fin</label>
+                    <input type="date" id="fecha_fin" name="fecha_fin">
+                </div>
+
+                <div class="form-group" style="width: 20%;">
+                    <label for="filtro_categoria">Filtro por Categoría</label>
+                    <select id="filtro_categoria" name="filtro_categoria">
+                        <option value="">Todos</option>
+                        {% for categoria in categorias %}
+                            <option value="{{ categoria.nombre }}">{{ categoria.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group" style="width: 20%;">
+                    <label for="formato">Formato</label>
+                    <select id="formato" name="formato">
+                        <option value="PDF">PDF</option>
+                        <option value="XLSX" selected>Excel (XLSX)</option>
+                     <option value="CSV" selected>Excel (CSV)</option>
+
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 150px; margin-top: 15px;">Generar Reporte</button>
+            </div>
+        </form>
     </fieldset>
 
-    <div class="form-section" style="margin-top: 20px;">
-        <h2>Reportes Generados Recientes</h2>
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Nombre de Archivo</th>
-                    <th>Tipo</th>
-                    <th>Fecha Generación</th>
-                    <th>Descargar</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Inventario_General_2024-10.xlsx</td>
-                    <td>Excel</td>
-                    <td>2025-10-29 10:00</td>
-                    <td><button class="btn-primary" style="padding: 5px;">Descargar</button></td>
-                </tr>
-            </tbody>
-        </table>
+    <hr style="margin: 30px 0;">
+
+    <div class="form-section" style="margin-top: 20px; display: flex; gap: 30px;">
+        
+        <div style="flex: 2; border: 1px solid #555; padding: 20px; background-color: #303030; border-radius: 5px;">
+            <h2>📊 Valor de Inventario por Clase</h2>
+            <canvas id="inventarioChart" style="max-height: 400px;"></canvas>
+        </div>
+        
+        <div style="flex: 1;">
+            <h2>📝 Reportes Generados Recientes</h2>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de Archivo</th>
+                        <th>Tipo</th>
+                        <th>Fecha Gen.</th>
+                        <th>Descargar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for archivo in archivos_generados %}
+                    <tr>
+                        <td>{{ archivo.filename }}</td>
+                        {# Asumo que 'tipo' y 'fecha_generacion' son propiedades del objeto 'archivo' #}
+                        <td>{{ archivo.tipo }}</td> 
+                        <td>{{ archivo.fecha_generacion|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            <a href="{% url 'inventario:descargar_reporte' filename=archivo.filename %}">
+                                <button class="btn-primary" style="padding: 5px;">Descargar</button>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #aaa;">No hay reportes generados recientemente.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
+    
+    <script>
+        // URLs de Django inyectadas en JavaScript
+        const url_inventario = "{% url 'inventario:generar_reporte' %}";
+        const url_movimientos = "{% url 'inventario:generar_reporte_movimientos' %}";
+
+        function actualizarActionFormulario() {
+            const select = document.getElementById('tipo_reporte');
+            const form = document.getElementById('reporteForm');
+            
+            // Comprobamos el valor seleccionado
+            if (select.value === 'movimientos') {
+                // Si es movimientos, cambiamos el action para apuntar a la vista correcta
+                form.action = url_movimientos;
+                
+                // Deshabilitar filtros que no aplican a reportes de movimientos simples
+                document.getElementById('fecha_inicio').disabled = false; // Dejamos fecha_inicio y fecha_fin habilitadas por si se implementa filtrado por rango de fecha
+                document.getElementById('fecha_fin').disabled = false;
+                document.getElementById('filtro_categoria').disabled = true; // Categoría NO aplica
+
+            } else {
+                // Si es inventario_general u otro, volvemos al action genérico
+                form.action = url_inventario;
+                
+                // Habilitar todos los filtros para el reporte general
+                document.getElementById('fecha_inicio').disabled = false;
+                document.getElementById('fecha_fin').disabled = false;
+                document.getElementById('filtro_categoria').disabled = false;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializa la función para configurar el action correcto al cargar la página
+            actualizarActionFormulario(); 
+            
+            // --- Código de Gráfico Chart.js ---
+            // ⚠️ Usamos 'datos_grafico_json' que viene de la vista 'reportes_dashboard'
+            const chartData = JSON.parse('{{ datos_grafico_json|safe }}');
+            
+            const ctx = document.getElementById('inventarioChart').getContext('2d');
+            
+            new Chart(ctx, {
+                type: 'bar', // Tipo de gráfico: barras
+                data: {
+                    labels: chartData.labels, 
+                    datasets: [{
+                        label: 'Valor de Inventario ($)',
+                        data: chartData.data, 
+                        backgroundColor: [
+                            '#007bff', '#28a745', '#ffc107', '#dc3545', '#6f42c1', 
+                            '#17a2b8', '#fd7e14', '#e83e8c', '#6c757d', '#20c997'
+                        ], 
+                        borderColor: '#303030',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Valor Total ($)',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#cccccc' 
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)' 
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#cccccc' 
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)' 
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false 
+                        }
+                    }
+                }
+            });
+        });
+    </script>
 {% endblock %}

@@ -1,4 +1,3 @@
-# sma_inventario/settings.py
 import os
 from pathlib import Path
 import pymysql
@@ -109,7 +108,7 @@ USE_I18N = True
 USE_TZ = True
 
 # ==========================================================
-# STATIC FILES (IMPORTANTE PARA RECONOCER LA CARPETA 'static' EN LA RAÍZ)
+# STATIC FILES (CSS, JS, IMAGENES DE PLANTILLA)
 # ==========================================================
 # 1. Donde Django espera encontrar archivos estáticos al usar {% static '...' %}
 STATIC_URL = '/static/'
@@ -122,12 +121,27 @@ STATICFILES_DIRS = [
 # 3. Directorio donde se recopilan los archivos estáticos en producción (python manage.py collectstatic)
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+
+# ==========================================================
+# 💾 MEDIA FILES (ARCHIVOS SUBIDOS Y REPORTES GENERADOS)
+# ==========================================================
+
+# URL pública para acceder a los archivos multimedia
+MEDIA_URL = '/media/'
+
+# Ruta ABSOLUTA en el sistema de archivos donde se guardarán los archivos.
+MEDIA_ROOT = BASE_DIR / "media"
+
+# 🆕 RUTA ESPECÍFICA PARA LOS REPORTES
+# Esto crea la ruta absoluta: /ruta/a/proyecto/media/reports/
+REPORTS_DIR = MEDIA_ROOT / "reports"
+
+
 # ==========================================================
 # LOGIN / LOGOUT
 # ==========================================================
 LOGIN_REDIRECT_URL = '/inventario/dashboard/'
 LOGIN_URL = 'core:login'
-# ✅ CORRECCIÓN FINAL: Se usa el nombre de la vista 'core:index' para redirigir a la página principal.
 LOGOUT_REDIRECT_URL = 'core:index' 
 
 # ==========================================================
